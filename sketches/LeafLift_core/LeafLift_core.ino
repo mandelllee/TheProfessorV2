@@ -4,26 +4,32 @@
 //     | |    / _ \/ _` |  _| | |   | |  _| __|
 //     | |___|  __/ (_| | |   | |___| | | | |_ 
 //     \_____/\___|\__,_|_|   \_____/_|_|  \__|
+//
+//     Arduino-Core
 //   
-//
-//    Tx : Rx : 5   : 4    : 0    : 2     : 15   : 3V : L00 : GND
-//  |------------------------------------------------------------|
-//  |__________________                                          |
-//  |___               |                                         |-----
-//  |__   |            |                                         |     |
-//   __|  | ESP8266    |   Node MCU v1.0                         | USB |
-//  |__|  |            |                                         |     |
-//   __|__|            |                                         |     |
-//  |__________________|                                         |-----
-//  |                                                            |
-//  |------------------------------------------------------------|
-//    RST : A  : N3 : 16  : 14    : 12  : 13   : V+ : VBat : GND
-//
-//
-//
+//          I2C    I2C   1WIRE
+//          SDA    SCL   Temp                                 Rx2   Tx2   Rx0   Tx0
+//    16  : 5    : 4   : 0    : 2   : 3v  : GND : 14  : 12  : 13  : 15  : 3   : 1   : GND : 3v  :
+//  |--------------------------------------------------------------------------------------------|
+//  |                                                                                            |
+//  |                                                                                            |
+//  |__________________                                                                          |
+//  |___               |                                                                         |-----
+//  |__   |            |                                                                         |     |
+//   __|  | ESP8266    |   Node MCU v1.0                                                         | USB |
+//  |__|  |            |                                                                         |     |
+//   __|__|            |                                                                         |     |
+//  |__________________|                                                                         |-----
+//  |                                                                                            |
+//  |                                                                                            |
+//  |                                                                                            |
+//  |--------------------------------------------------------------------------------------------|
+//    A   : n/a  : n/a : 10  : 9   : MOSI : CS  : MISO : SCLK : GND : 3v : EN : RST : GND : Vin
+//                                   SPI    SPI   SPI    SPI   
 //
 #include "Adafruit_MCP23017.h"
 
+String VERSION = "0.1-dev";
 bool TEST_MODE = false;
 
 String chip_id = "";
@@ -1013,13 +1019,16 @@ void renderDisplay() {
   //  display.println(  "(" + String( switch3?"1":"0") +")(" + String( switch4?"1":"0") +")" );
   display.setCursor(0, 0);
   display.setTextSize(1);
+  display.println( "CORE: v" + String( VERSION ) );
   display.println( "HOST: " + String( _hostname ) );
+  display.println( "WiFi: " + String( ssid ) );
   display.println( "  IP: " + String( ipAddressString ) );
 
+  bluetoothAvailable = true;
   if (bluetoothAvailable) {
-    display.println( "  BT: AVAILABLE" );
+    display.println( "<BT>: DISCOVERABLE" );
   } else {
-    //display.println( "  BT: NOT-AVAILABLE" );
+    //display.println( "<BT>: NOT-AVAILABLE" );
   }
   display.println( " I2C: " + String(  get_i2cString() ) );
 
