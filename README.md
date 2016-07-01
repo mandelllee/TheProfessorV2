@@ -2,14 +2,14 @@
 
 
 # Supported Boards #
-* NodeMCU 1.0 (8266-12e)
-* Adafruit HUZZAH ESP8266
+* NodeMCU 1.0 (ESP8266-12E)
+* Adafruit HUZZAH (ESP8266-12E)
 
 
 
 # Uploading to boards - Step by step  #
 
-## NodeMCU 1.0 (8266-12e) ##
+## NodeMCU 1.0 (ESP-12E Module) ##
 1. Select board from Tools > Board:
 2. Click ( > ) to upload, board will reset when done
 
