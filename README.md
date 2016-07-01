@@ -2,6 +2,7 @@
 
 # Setup #
 1. Install USB drivers [CP210x USB to UART Bridge VCP Drivers](https://www.silabs.com/products/mcu/Pages/USBtoUARTBridgeVCPDrivers.aspx)
+2. Copy libraries to ~/Documents/Arduino/library/ 
 
 
 # Supported Boards #
