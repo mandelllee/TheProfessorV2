@@ -1,4 +1,10 @@
-
+//      _                 __   _     _  __ _   
+//     | |               / _| | |   (_)/ _| |  
+//     | |     ___  __ _| |_  | |    _| |_| |_ 
+//     | |    / _ \/ _` |  _| | |   | |  _| __|
+//     | |___|  __/ (_| | |   | |___| | | | |_ 
+//     \_____/\___|\__,_|_|   \_____/_|_|  \__|
+//   
 //
 //    Tx : Rx : 5   : 4    : 0    : 2     : 15   : 3V : L00 : GND
 //  |------------------------------------------------------------|
@@ -13,25 +19,6 @@
 //  |------------------------------------------------------------|
 //    RST : A  : N3 : 16  : 14    : 12  : 13   : V+ : VBat : GND
 //
-//
-//
-//     V+ : Q1 : DATA : GND : CLK : LOAD : V+ : --
-//    |-------------------------------------------|
-//    |                                           |
-//     )   74Hc595                                |
-//    |                                           |
-//    |-------------------------------------------|
-//      Q2  : Q3 : Q4 : Q5 : Q6 : Q7 : Q8  : GND
-//
-//
-//
-//      V+ : CLK-E : D3 : D2 : D1 : D0 : -- : Q7
-//    |-------------------------------------------|
-//    |                                           |
-//     )   74hct165n                              |
-//    |                                           |
-//    |-------------------------------------------|
-//     LOAD : CLK : D4 : D5 : D6 : D7 : _Q7 : GND
 //
 //
 //
@@ -72,35 +59,35 @@ const char *ap_passwd    = "1234567890";
 
 void setupWiFi()
 {
-//    WiFi.mode(WIFI_AP);
-//    WiFi.softAP(ap_name, ap_passwd);
+  //    WiFi.mode(WIFI_AP);
+  //    WiFi.softAP(ap_name, ap_passwd);
 
-    WiFi.mode(WIFI_STA);
-    connectWiFi();
+  WiFi.mode(WIFI_STA);
+  connectWiFi();
 }
 
 void __setupWiFi() {
 
 
-//  WiFi.softAP( "Wi-Fi_" + _hostname.c_str(), "secure" );
-    WiFi.mode(WIFI_AP);
+  //  WiFi.softAP( "Wi-Fi_" + _hostname.c_str(), "secure" );
+  WiFi.mode(WIFI_AP);
 
   //WiFi.mode(WIFI_STA);
 
-    uint8_t mac[WL_MAC_ADDR_LENGTH];
-    WiFi.softAPmacAddress(mac);
-    String macID = String(mac[WL_MAC_ADDR_LENGTH - 2], HEX) +
-                   String(mac[WL_MAC_ADDR_LENGTH - 1], HEX);
-    macID.toUpperCase();
-    String AP_NameString = "ESP8266 Thing " + macID;
-  
-    char AP_NameChar[AP_NameString.length() + 1];
-    memset(AP_NameChar, 0, AP_NameString.length() + 1);
-  
-    for (int i=0; i<AP_NameString.length(); i++)
-      AP_NameChar[i] = AP_NameString.charAt(i);
-  
-    WiFi.softAP(AP_NameChar, WiFiAPPSK);
+  uint8_t mac[WL_MAC_ADDR_LENGTH];
+  WiFi.softAPmacAddress(mac);
+  String macID = String(mac[WL_MAC_ADDR_LENGTH - 2], HEX) +
+                 String(mac[WL_MAC_ADDR_LENGTH - 1], HEX);
+  macID.toUpperCase();
+  String AP_NameString = "ESP8266 Thing " + macID;
+
+  char AP_NameChar[AP_NameString.length() + 1];
+  memset(AP_NameChar, 0, AP_NameString.length() + 1);
+
+  for (int i = 0; i < AP_NameString.length(); i++)
+    AP_NameChar[i] = AP_NameString.charAt(i);
+
+  WiFi.softAP(AP_NameChar, WiFiAPPSK);
 
   //connectWiFi();
 }
@@ -249,12 +236,12 @@ void setupIO() {
   mcp.pinMode(9, INPUT);
   mcp.pinMode(10, INPUT);
   mcp.pinMode(11, INPUT);
-//  mcp.pullUp(8, HIGH);
-//  mcp.pullUp(9, HIGH);
-//  mcp.pullUp(10, HIGH);
-//  mcp.pullUp(11, HIGH);
+  //  mcp.pullUp(8, HIGH);
+  //  mcp.pullUp(9, HIGH);
+  //  mcp.pullUp(10, HIGH);
+  //  mcp.pullUp(11, HIGH);
 
-  if( TEST_MODE ) testSwitches();
+  if ( TEST_MODE ) testSwitches();
 
   //  delay(200);
   //  mcp.digitalWrite(1, LOW);
@@ -326,7 +313,7 @@ void setupBluetooth() {
     addTextToDisplay( "response: " + String( r ) );
 
     String b = sendATCommand( "AT+BAUD8", "OKsetbaud", 2000 );
-    
+
     // Send test message to other device
     //BT.println( getJSONStatus() );
   } else {
@@ -426,7 +413,7 @@ void handleBluetooth()
 
 }
 
-void toggleAllSwitches(){
+void toggleAllSwitches() {
 
   delay(250);
   if ( switch_state == 0) {
@@ -468,23 +455,23 @@ void setupHTTPServer() {
 
   server.on("/switch/0/0", []() {
     server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [0] 0 ");    
+    Serial.println("Setting switch [0] 0 ");
     mcp.digitalWrite( 0, HIGH );
   });
   server.on("/switch/0/1", []() {
     server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [0] 1 ");    
+    Serial.println("Setting switch [0] 1 ");
     mcp.digitalWrite( 0, LOW );
   });
 
   server.on("/switch/1/0", []() {
     server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [1] 0 ");    
+    Serial.println("Setting switch [1] 0 ");
     mcp.digitalWrite( 1, HIGH );
   });
   server.on("/switch/1/1", []() {
     server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [1] 1 ");    
+    Serial.println("Setting switch [1] 1 ");
     mcp.digitalWrite( 1, LOW );
   });
 
@@ -492,27 +479,27 @@ void setupHTTPServer() {
 
   server.on("/switch/2/0", []() {
     server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [2] 0 ");    
+    Serial.println("Setting switch [2] 0 ");
     mcp.digitalWrite( 2, HIGH );
   });
   server.on("/switch/2/1", []() {
     server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [2] 1 ");    
+    Serial.println("Setting switch [2] 1 ");
     mcp.digitalWrite( 2, LOW );
   });
 
-  
+
   server.on("/switch/3/0", []() {
     server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [3] 0 ");    
+    Serial.println("Setting switch [3] 0 ");
     mcp.digitalWrite( 3, HIGH );
   });
   server.on("/switch/3/1", []() {
     server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [3] 1 ");    
+    Serial.println("Setting switch [3] 1 ");
     mcp.digitalWrite( 3, LOW );
   });
-  
+
 
 }
 
@@ -901,7 +888,7 @@ void setup() {
 
   setupWiFi();
 
-  if( TEST_MODE ) setupBluetooth();
+  if ( TEST_MODE ) setupBluetooth();
 
   setupHTTPServer();
   MDNSConnect();
@@ -1145,8 +1132,8 @@ void initDisplay()
   display.begin(SSD1306_SWITCHCAPVCC);  // Switch OLED
   display.clearDisplay();
   display.display();
-  if( TEST_MODE ) {
-  updateDisplay();
+  if ( TEST_MODE ) {
+    updateDisplay();
     for ( int n = 0; n < 10; n++) {
       addTextToDisplay( ".");
       delay( 100 );
@@ -1242,24 +1229,24 @@ void readShiftRegister() {
 bool buttonADown = false;
 int buttonAState = 0;
 
-int buttondownstates[] = {false,false,false,false};
-int buttonstates[] = {LOW,LOW,LOW,LOW};
+int buttondownstates[] = {false, false, false, false};
+int buttonstates[] = {LOW, LOW, LOW, LOW};
 
-int buttonPins[] = {8,9,10,11};
-int ledPins[] = {4,5,6,7};
+int buttonPins[] = {8, 9, 10, 11};
+int ledPins[] = {4, 5, 6, 7};
 
-void handleButtons(){
+void handleButtons() {
 
-  for( int n=0; n<4; n++ ){
+  for ( int n = 0; n < 4; n++ ) {
     int state = mcp.digitalRead(buttonPins[n]);
 
-    if( LOW == state ){
+    if ( LOW == state ) {
       Serial.println("Button[" + String(n) + "] DOWN");
-      buttondownstates[n] = true;    
+      buttondownstates[n] = true;
     } else {
-      
+
       // UP
-      if( buttondownstates[n] == true ){
+      if ( buttondownstates[n] == true ) {
         Serial.println("Button[" + String(n) + "] UP");
         // toggle
         buttonstates[n] = !buttonstates[n];
@@ -1275,7 +1262,7 @@ void loop() {
   //pinValues = read_shift_regs();
 
 
-  
+
   //handleButtons();
   //
   //  if ( buttonAState == 0 ) {
