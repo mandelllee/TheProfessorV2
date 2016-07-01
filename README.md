@@ -18,3 +18,7 @@
 2. Put the Board in program mode on bootloader 
 *(hold GPIO0 button then bress reset holding GPIO0 till after reset is released)*
 3. Click ( > ) to upload, board will reset when done
+
+
+# Tools for graphics #
+[Tool for creating PROGMEM images](http://javl.github.io/image2cpp/)
