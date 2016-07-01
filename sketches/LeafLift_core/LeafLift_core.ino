@@ -29,8 +29,8 @@
 //
 #include "Adafruit_MCP23017.h"
 
-String VERSION = "0.3-dev";
-bool TEST_MODE = false;
+String VERSION = "0.7-dev";
+bool TEST_MODE = true;
 
 String chip_id = "";
 String _hostname = "";
@@ -44,6 +44,8 @@ String currentDisplayText = "";
 bool _renderDisplayEnabled = true;
 
 bool _enableOTAUpdate = true;
+bool _phSensorEnabled = false;
+
 
 #include <SoftwareSerial.h>
 SoftwareSerial BT(14, 12);
@@ -126,7 +128,7 @@ void firmwareProgress(unsigned int progress, unsigned int total) {
     Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
 
       //display.clearDisplay();
-      displayTextOnDisplay( "\nUpdating Firmware...\n\n                    " +  String( progress / (total / 100) ) + "%" );
+      displayTextOnDisplay( "\nUpdating Firmware...\n\n  " +  String( progress / (total / 100) ) + "%" );
       
     
   };
@@ -508,6 +510,10 @@ void toggleAllSwitches() {
     mcp.digitalWrite( 7, HIGH );
   }
 }
+void sendStatusJSON( String msg ){
+  Serial.println(msg);
+  server.send(200, "text/plain", getJSONStatus( msg ) ); 
+}
 
 void setupHTTPServer() {
   Serial.println("Starting http server...");
@@ -515,11 +521,76 @@ void setupHTTPServer() {
   server.on("/", []() {
     server.send(200, "text/plain", getJSONStatus() );
   });
-  server.begin();
 
-  server.on("/switches", []() {
-    server.send(200, "text/html", "<html><head><script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js\"></script><script src=\"http://gbsx.net/switches.js\"></script></head><body></body></html>");
+
+  server.on("/config.json", []() {
+    server.send(200, "application/json", getJSONStatus() );
   });
+  server.on("/status.json", []() {
+    server.send(200, "application/json", getJSONStatus() );
+  });
+  
+  server.on("/switches", []() {
+    server.send(200, "text/html", "<html><head><script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js\"></script><script src=\"http://gbsx.net/nodeconfig.js\"></script></head><body></body></html>");
+  });
+
+server.on("/config.html", []() {
+    server.send(200, "text/html", "<html><head><script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js\"></script><script src=\"http://gbsx.net/nodeconfig.js\"></script></head><body></body></html>");
+  });
+
+  server.on("/nodeconfig/bluetooth/0", []() {
+    bluetoothAvailable = false;
+    sendStatusJSON("Bluetooth OFF ");
+  });
+  server.on("/nodeconfig/bluetooth/1", []() {
+    bluetoothAvailable = true;
+    sendStatusJSON("Bluetooth ON ");
+  });
+
+
+  server.on("/nodeconfig/ota/0", []() {
+    _enableOTAUpdate = false;
+    sendStatusJSON("OTA DISABLED");
+  });
+  server.on("/nodeconfig/ota/1", []() {
+
+    _enableOTAUpdate = true;
+    sendStatusJSON("OTA OENABLED");
+  });
+
+
+  server.on("/nodeconfig/temp_probes/0", []() {
+    server.send(200, "text/plain", "1" );
+    Serial.println("OTA DISABLED");
+    _enableOTAUpdate = false;
+  });
+  server.on("/nodeconfig/temp_probes/1", []() {
+    _soilSensorEnabled = true;
+    sendStatusJSON( "Probes Disbaled" );    
+  });
+
+   server.on("/nodeconfig/soil/0", []() {
+    _soilSensorEnabled = false;
+    sendStatusJSON( "soilsensor DISABLED");  
+  });
+  server.on("/nodeconfig/soil/1", []() {
+    _soilSensorEnabled = true;
+    sendStatusJSON( "soilsensor ENABLED" ); 
+  });
+
+
+server.on("/nodeconfig/ph/0", []() {
+    _phSensorEnabled = false;
+    sendStatusJSON( "pH sensor DISABLED");  
+  });
+  server.on("/nodeconfig/ph/1", []() {
+    _phSensorEnabled = true;
+    sendStatusJSON( "pH sensor ENABLED" ); 
+  });
+
+
+
+   //TODO: handle hostname
 
   server.on("/switch/0/0", []() {
     server.send(200, "text/plain", "1" );
@@ -569,6 +640,9 @@ void setupHTTPServer() {
   });
 
 
+  server.begin();
+
+
 }
 
 
@@ -594,8 +668,10 @@ String getJSONStatus( String msg )
   String i2c_string = get_i2cString();
 
 
-  String data =  "{\"chip_id\":\"" + chip_id + "\", \"ip\":\"" + ipAddressString + "\", \"hostname\":\"" + _hostname + "\", \"i2c\":[" + i2c_string + "]";
+  String data =  "{\"chip_id\":\"" + chip_id + "\", \"core_version\":\""+ VERSION +"\", \"ip\":\"" + ipAddressString + "\", \"hostname\":\"" + _hostname + "\", \"i2c\":[" + i2c_string + "]";
 
+  data += ", \"bluetooth\": \"" + String(bluetoothAvailable?"1":"0") + "\"";
+  data += ", \"ota\": \"" + String(_enableOTAUpdate?"1":"0") + "\"";
 
   if ( msg.length() > 0) data += ", \"msg\": \"" + msg + "\"";
 
@@ -956,6 +1032,11 @@ void setup() {
   if ( hasDevice( 99 ) ) {
     Serial.println("Altas pH Sensor found [99]");    
   }
+
+  if ( hasDevice( 41 ) ) {
+    Serial.println("Luminosity/Lux Sensor [41]");    
+  }
+  
   if ( hasDevice( 199 ) ) {
     Serial.println("[BMP085] BMP180 Barometric Pressure, Temp, Altitude");   
   }
@@ -994,12 +1075,14 @@ void configureHostname() {
 
 
   } else if ( chip_id == "13891932" ) {
-    _hostname = "aquarium";
+    _hostname = "aqua";
     _soilSensorEnabled = false;
     
   } else if ( chip_id == "1626288" ) {
     _hostname = "dino";
     _soilSensorEnabled = false;
+    
+    _bluetoothEnabled = true;
     
     // hack  to have bluetooth enabled
     bluetoothAvailable = true;
