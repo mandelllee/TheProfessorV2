@@ -1,17 +1,20 @@
-#arduino core for leaflift platform
+#Arduino-core for leaflift platform
+
+
+# Supported Boards #
+* NodeMCU 1.0 (8266-12e)
+* Adafruit HUZZAH ESP8266
 
 
 
-```
-#!text
+# Uploading to boards - Step by step  #
 
+## NodeMCU 1.0 (8266-12e) ##
+1. Select board from Tools > Board:
+2. Click ( > ) to upload, board will reset when done
 
- _                 __   _     _  __ _   
-| |               / _| | |   (_)/ _| |  
-| |     ___  __ _| |_  | |    _| |_| |_ 
-| |    / _ \/ _` |  _| | |   | |  _| __|
-| |___|  __/ (_| | |   | |___| | | | |_ 
-\_____/\___|\__,_|_|   \_____/_|_|  \__|
-                                      
-
-```
+##  Adafruit HUZZAH ESP8266 ##
+1. Select board from Tools > Board:
+2. Put the Board in program mode on bootloader 
+*(hold GPIO0 button then bress reset holding GPIO0 till after reset is released)*
+3. Click ( > ) to upload, board will reset when done
