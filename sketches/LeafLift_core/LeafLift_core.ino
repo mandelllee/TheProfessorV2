@@ -923,6 +923,11 @@ void configureHostname() {
     _hostname = "soil";
     _soilSensorEnabled = true;
 
+  } else if ( chip_id == "16044072" ) {
+    _hostname = "hippo";
+    _soilSensorEnabled = false;
+
+
   } else if ( chip_id == "1626288" ) {
     _hostname = "dino";
     _soilSensorEnabled = false;
