@@ -29,7 +29,7 @@
 //
 #include "Adafruit_MCP23017.h"
 
-String VERSION = "0.1-dev";
+String VERSION = "0.3-dev";
 bool TEST_MODE = false;
 
 String chip_id = "";
@@ -38,6 +38,12 @@ String _hostname = "";
 int i2c_devices[10];
 int i2c_device_count = 0;
 String currentDisplayText = "";
+
+#include <WiFiUdp.h>
+#include <ArduinoOTA.h>
+bool _renderDisplayEnabled = true;
+
+bool _enableOTAUpdate = true;
 
 #include <SoftwareSerial.h>
 SoftwareSerial BT(14, 12);
@@ -72,6 +78,58 @@ void setupWiFi()
   connectWiFi();
 }
 
+
+void setupOTAUpdate(){
+
+  // Port defaults to 8266
+  // ArduinoOTA.setPort(8266);
+
+  char hn[_hostname.length() + 1];
+  memset(hn, 0, _hostname.length() + 1);
+
+  for (int i = 0; i < _hostname.length(); i++)
+    hn[i] = _hostname.charAt(i);
+    
+  // Hostname defaults to esp8266-[ChipID]
+  ArduinoOTA.setHostname( hn );
+
+  
+  // No authentication by default
+  // ArduinoOTA.setPassword((const char *)"123");
+
+  ArduinoOTA.onStart([]() {
+
+    _renderDisplayEnabled = false;
+    Serial.println("Start");
+  });
+  ArduinoOTA.onEnd([]() {
+    Serial.println("\nEnd");
+
+    Serial.println("\Rebooting");
+    displayTextOnDisplay( "\n\nRebooting..." );
+      
+    ESP.restart();
+  });
+  ArduinoOTA.onProgress(firmwareProgress);
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+    else if (error == OTA_END_ERROR) Serial.println("End Failed");
+  });
+  ArduinoOTA.begin();
+}
+
+void firmwareProgress(unsigned int progress, unsigned int total) {
+    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+
+      //display.clearDisplay();
+      displayTextOnDisplay( "\nUpdating Firmware...\n\n                    " +  String( progress / (total / 100) ) + "%" );
+      
+    
+  };
 void __setupWiFi() {
 
 
@@ -906,11 +964,14 @@ void setup() {
 
   setupWiFi();
 
+  
   if ( _bluetoothEnabled ) setupBluetooth();
 
   setupHTTPServer();
   MDNSConnect();
 
+  setupOTAUpdate();
+  
   Serial.println("System ready.");
 
 }
@@ -922,6 +983,7 @@ void configureHostname() {
   //char hostname [12+1];
   //_hostname = "ESP_" + chip_id;
 
+
   if ( chip_id == "13904180" ) {
     _hostname = "soil";
     _soilSensorEnabled = true;
@@ -931,6 +993,10 @@ void configureHostname() {
     _soilSensorEnabled = false;
 
 
+  } else if ( chip_id == "13891932" ) {
+    _hostname = "aquarium";
+    _soilSensorEnabled = false;
+    
   } else if ( chip_id == "1626288" ) {
     _hostname = "dino";
     _soilSensorEnabled = false;
@@ -956,7 +1022,7 @@ void MDNSConnect() {
   Serial.println("mDNS hostname: " + _hostname );
 
   MDNS.addService("http", "tcp", 80);
-  MDNS.addService("gbsxnode", "tcp", 80);
+  MDNS.addService("rootgrid-node", "tcp", 80);
 }
 
 void updateSwitchStatus( String switch_number, bool state ) {
@@ -999,6 +1065,17 @@ void urlRequest( char host[], String url ) {
   Serial.println("closing connection");
 
 }
+
+// TOOL for creating PROGMEM images
+//http://javl.github.io/image2cpp/
+
+const unsigned char otaIcon [] PROGMEM = {
+0xff, 0xff, 0xff, 0xff, 0x80, 0x00, 0x00, 0x01, 0x80, 0x00, 0x00, 0x01, 0x87, 0xef, 0xf3, 0x81, 
+0x8e, 0x73, 0x83, 0x81, 0x8e, 0x73, 0x87, 0xc1, 0x8e, 0x73, 0x87, 0xe1, 0x8e, 0x73, 0x87, 0xe1, 
+0x8e, 0x73, 0x8e, 0x71, 0x8e, 0x73, 0x8e, 0x71, 0x8e, 0x73, 0x8f, 0xf1, 0x8e, 0x73, 0x8f, 0xf1, 
+0x8e, 0x73, 0x8e, 0x71, 0x87, 0xe3, 0x8e, 0x71, 0x80, 0x00, 0x00, 0x01, 0xff, 0xff, 0xff, 0xff, 
+
+};
 
 const unsigned char bluetoothIcon [] PROGMEM = {
 0x00, 0x00, 0x01, 0x00, 0x01, 0x80, 0x01, 0xe0, 0x01, 0xb0, 0x0d, 0xb0, 0x07, 0xe0, 0x03, 0x80, 
@@ -1072,9 +1149,8 @@ const unsigned char launchScreen [] PROGMEM = {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 
 };
-
 void renderDisplay() {
-
+  if( _renderDisplayEnabled == false ) return;
   display.clearDisplay();
   display.setTextColor(WHITE);
   display.setCursor(0, 20);
@@ -1112,13 +1188,14 @@ void renderDisplay() {
 //     display.setCursor(100, 0);
 //     display.println( "(>B)" );
     //display.clearDisplay();
-    display.drawBitmap(110, 0, bluetoothIcon, 16, 16, WHITE );
-
-    
-  } else {
-    //display.println( "<BT>: NOT-AVAILABLE" );
+    display.drawBitmap(110, 0, bluetoothIcon, 16, 16, WHITE ); 
   }
-  display.display();
+
+  if (_enableOTAUpdate) {
+  
+      display.drawBitmap(96, 48, otaIcon, 32, 16, WHITE );
+  }
+display.display();
 }
 
 void drawGPIOPin(int pinNum, int state, int x, int y) {
@@ -1384,5 +1461,7 @@ void loop() {
   ts.execute();
   sensorScheduler.execute();
   server.handleClient();
+
+  ArduinoOTA.handle();
 }
 
