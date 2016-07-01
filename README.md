@@ -1,5 +1,8 @@
 #Arduino-core for leaflift platform
 
+# Setup #
+1. Install USB drivers [CP210x USB to UART Bridge VCP Drivers](https://www.silabs.com/products/mcu/Pages/USBtoUARTBridgeVCPDrivers.aspx)
+
 
 # Supported Boards #
 * NodeMCU 1.0 (ESP8266-12E)
