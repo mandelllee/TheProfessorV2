@@ -29,7 +29,7 @@
 //
 #include "Adafruit_MCP23017.h"
 
-String VERSION = "0.7-dev";
+String VERSION = "0.8-taco";
 bool TEST_MODE = true;
 
 String chip_id = "";
