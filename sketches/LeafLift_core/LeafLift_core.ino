@@ -327,7 +327,7 @@ unsigned char* MD5::make_hash(char *arg)
 
 String BOARD_ID = "";
 
-String VERSION = "0.7-beans";
+String VERSION = "0.7-pom";
 bool TEST_MODE = false;
 
 String chip_id = "";
@@ -874,6 +874,11 @@ void setupHTTPServer() {
     server.send(200, "text/html", "<html><head><script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js\"></script><script src=\"http://gbsx.net/nodeconfig.js\"></script></head><body></body></html>");
   });
 
+server.on("/provision", []() {
+
+  provisionDevice();
+  
+});
   server.on("/nodeconfig/bluetooth/0", []() {
     bluetoothAvailable = false;
     sendStatusJSON("Bluetooth OFF ");
@@ -1481,6 +1486,26 @@ void updateSwitchStatus( String switch_number, bool state ) {
   //urlRequest( "10.5.1.105", "/switch/"+switch_number+"/" + (state?"on":"off") );
   //urlRequest( "10.5.1.105", "/switch/"+switch_number+"/toggle" );
 }
+void provisionDevice(){
+
+  char host[] = "10.5.1.25";
+  //char host[] = "api-quadroponic.rhcloud.com";
+  int port = 3000;
+  
+  String url = "/v1/provision?type=node";
+
+  url += "&nodeid=" + BOARD_ID;
+  url += "&platform=arduino";
+  url += "&hardware=ESP8266";
+  url += "&boardid=" + chip_id;
+
+  url += "&core_version=" + VERSION;
+  url +=  + "&boardname=" + _hostname;
+
+  Serial.println( String(host ) + "" + url );
+
+  urlRequest( host, url, port );
+}
 
 void recordValue(  String ty, String propertyname, String value, String id_value ) {
 
@@ -1495,7 +1520,7 @@ url +=  + "&boardname=" + _hostname;
 
   urlRequest( host, url, 80 );
 
-}
+}br
 
 void urlRequest( char host[], String url, int httpPort ) {
 
