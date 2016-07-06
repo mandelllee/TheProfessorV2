@@ -30,7 +30,7 @@
 # Other resources #
 * https://github.com/gnulabis/UTFT-ESP8266
 * https://github.com/esp8266/Arduino
-
+* https://github.com/nodemcu/nodemcu-flasher
 
 ```
 #!text
