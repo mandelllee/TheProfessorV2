@@ -1450,6 +1450,10 @@ void configureHostname() {
     _hostname = "aqua";
     _soilSensorEnabled = false;
 
+  } else if ( chip_id == "13916356" ) {
+    _hostname = "tempo";
+    _soilSensorEnabled = false;
+
   } else if ( chip_id == "1626288" ) {
     _hostname = "dino";
     _soilSensorEnabled = false;
@@ -1488,9 +1492,10 @@ void updateSwitchStatus( String switch_number, bool state ) {
 }
 void provisionDevice(){
 
-  char host[] = "10.5.1.25";
-  //char host[] = "api-quadroponic.rhcloud.com";
-  int port = 3000;
+  //char host[] = "10.5.1.25";
+  //int port = 3000;
+  char host[] = "api-quadroponic.rhcloud.com";
+  int port = 80;
   
   String url = "/v1/provision?type=node";
 
@@ -1520,7 +1525,7 @@ url +=  + "&boardname=" + _hostname;
 
   urlRequest( host, url, 80 );
 
-}br
+}
 
 void urlRequest( char host[], String url, int httpPort ) {
 
