@@ -328,10 +328,13 @@ unsigned char* MD5::make_hash(char *arg)
 
 #include "Adafruit_MCP23017.h"
 
+char API_HOST[] = "api-quadroponic.rhcloud.com";
+bool SEND_DATA_TO_API = true;
+int SEND_DATA_INTERVAL = 10000;
 
 String BOARD_ID = "";
 
-String VERSION = "0.7-orphan";
+String VERSION = "0.7-beet";
 bool TEST_MODE = false;
 
 String chip_id = "";
@@ -412,7 +415,7 @@ void TickCallback() {
 
 
 
-const uint16_t aport = 8266;
+//const uint16_t aport = 8266;
 //WiFiServer TelnetServer(aport);
 //WiFiClient Telnet;
 //
@@ -420,7 +423,7 @@ const uint16_t aport = 8266;
 //void printDebug(const char* c){
 ////Prints to telnet if connected
 //  Serial.println(c);
-// 
+//
 //  if (Telnet && Telnet.connected()){
 //    Telnet.println(c);
 //  } //- See more at: http://www.esp8266.com/viewtopic.php?f=8&t=5597#sthash.ITMN1A9x.dpuf
@@ -561,7 +564,7 @@ String _soilState = "?";
 Adafruit_BMP085 bmp;
 
 
-void setupBMP085Sensor(){
+void setupBMP085Sensor() {
   if (!bmp.begin()) {
     Serial.println("Could not find a valid BMP085 sensor, check wiring!");
     while (1) {}
@@ -570,36 +573,38 @@ void setupBMP085Sensor(){
 int _lastTempC;
 int _lastTempF;
 
-void readBMP085Sensor(){
+void readBMP085Sensor() {
 
-    Serial.print("Temperature = ");
-    Serial.print(bmp.readTemperature());
-    Serial.println(" *C");
-    _lastTempC = bmp.readTemperature();
-    _lastTempF = (_lastTempC * 1.8) + 32;
-     
-    Serial.print("Pressure = ");
-    Serial.print(bmp.readPressure());
-    Serial.println(" Pa");
-    
-    // Calculate altitude assuming 'standard' barometric
-    // pressure of 1013.25 millibar = 101325 Pascal
-    Serial.print("Altitude = ");
-    Serial.print(bmp.readAltitude());
-    Serial.println(" meters");
+  Serial.print("Temperature = ");
+  Serial.print(bmp.readTemperature());
+  Serial.println(" *C");
+  _lastTempC = bmp.readTemperature();
+  _lastTempF = (_lastTempC * 1.8) + 32;
 
-    Serial.print("Pressure at sealevel (calculated) = ");
-    Serial.print(bmp.readSealevelPressure());
-    Serial.println(" Pa");
+  recordValue( "environment", "temperature_f", String(_lastTempF), _hostname );
+
+  Serial.print("Pressure = ");
+  Serial.print(bmp.readPressure());
+  Serial.println(" Pa");
+
+  // Calculate altitude assuming 'standard' barometric
+  // pressure of 1013.25 millibar = 101325 Pascal
+  Serial.print("Altitude = ");
+  Serial.print(bmp.readAltitude());
+  Serial.println(" meters");
+
+  Serial.print("Pressure at sealevel (calculated) = ");
+  Serial.print(bmp.readSealevelPressure());
+  Serial.println(" Pa");
 
   // you can get a more precise measurement of altitude
   // if you know the current sea level pressure which will
   // vary with weather and such. If it is 1015 millibars
   // that is equal to 101500 Pascals.
-    Serial.print("Real altitude = ");
-    Serial.print(bmp.readAltitude(101500));
-    Serial.println(" meters");
-    
+  Serial.print("Real altitude = ");
+  Serial.print(bmp.readAltitude(101500));
+  Serial.println(" meters");
+
 }
 
 void readSoilSensor() {
@@ -934,11 +939,23 @@ void setupHTTPServer() {
     server.send(200, "text/html", "<html><head><script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js\"></script><script src=\"http://gbsx.net/nodeconfig.js\"></script></head><body></body></html>");
   });
 
-server.on("/provision", []() {
+  server.on("/provision", []() {
 
-  provisionDevice();
-  
-});
+    provisionDevice();
+
+  });
+
+  server.on("/nodeconfig/api_enabled/0", []() {
+    SEND_DATA_TO_API = false;
+    sendStatusJSON("API Sending OFF ");
+  });
+
+  server.on("/nodeconfig/api_enabled/1", []() {
+    SEND_DATA_TO_API = true;
+    sendStatusJSON("API Sending ON ");
+  });
+
+
   server.on("/nodeconfig/bluetooth/0", []() {
     bluetoothAvailable = false;
     sendStatusJSON("Bluetooth OFF ");
@@ -1080,6 +1097,11 @@ String getJSONStatus( String msg )
 
   String data =  "{\"board_id\":\"" + BOARD_ID + "\", \"chip_id\":\"" + chip_id + "\", \"core_version\":\"" + VERSION + "\", \"ip\":\"" + ipAddressString + "\", \"hostname\":\"" + _hostname + "\", \"i2c\":[" + i2c_string + "]";
 
+  data += ", \"api_enabled\": \"" + String(SEND_DATA_TO_API ? "1" : "0") + "\"";
+  data += ", \"api_interval\": \"" + String(SEND_DATA_INTERVAL) + "\"";
+  data += ", \"api_host\": \"" + String(API_HOST) + "\"";
+  
+  
   data += ", \"uptime_display\": \"" + String(_uptime_display ? "1" : "0") + "\"";
   data += ", \"bluetooth\": \"" + String(bluetoothAvailable ? "1" : "0") + "\"";
   data += ", \"ota\": \"" + String(_enableOTAUpdate ? "1" : "0") + "\"";
@@ -1292,12 +1314,12 @@ void SensorCallback() {
   //readTemperatureSensors();
   if (_soilSensorEnabled) readSoilSensor();
 
-if( hasDevice( 57 ) ){
-  readLUXSensor();
-}
- if( hasDevice( 119 ) ){
-  readBMP085Sensor();
- }
+  if ( hasDevice( 57 ) ) {
+    readLUXSensor();
+  }
+  if ( hasDevice( 119 ) ) {
+    readBMP085Sensor();
+  }
 }
 
 
@@ -1453,12 +1475,12 @@ void setup() {
     Serial.println("Luminosity/Lux Sensor [41]");
   }
 
-  if( hasDevice( 57 ) ){
+  if ( hasDevice( 57 ) ) {
     Serial.println("[BMP085] Temp Sensor");
-    setupLUXSensor();  
+    setupLUXSensor();
   }
 
-  if( hasDevice( 119 ) ){
+  if ( hasDevice( 119 ) ) {
     Serial.println("Barometric Pressure, Temp, Altitude");
     setupBMP085Sensor();
   }
@@ -1561,13 +1583,13 @@ void updateSwitchStatus( String switch_number, bool state ) {
   //urlRequest( "10.5.1.105", "/switch/"+switch_number+"/" + (state?"on":"off") );
   //urlRequest( "10.5.1.105", "/switch/"+switch_number+"/toggle" );
 }
-void provisionDevice(){
+void provisionDevice() {
 
   //char host[] = "10.5.1.25";
   //int port = 3000;
   char host[] = "api-quadroponic.rhcloud.com";
   int port = 80;
-  
+
   String url = "/v1/provision?type=node";
 
   url += "&nodeid=" + BOARD_ID;
@@ -1585,16 +1607,20 @@ void provisionDevice(){
 
 void recordValue(  String ty, String propertyname, String value, String id_value ) {
 
+  if( SEND_DATA_TO_API==false ){
+    Serial.println("API disbaled");
+    return;
+  }
   //char host[] = "10.5.1.25";
-  char host[] = "api-quadroponic.rhcloud.com";
-  
+//  char host[] = API_HOST;
+
   String url = "/v1/record?type=" + String(ty) + "&propertyname=" + String(propertyname)  + "&value=" + String(value) + "&id=" + String(id_value) + "&boardid=" + BOARD_ID
                + "&core_version=" + VERSION;
-url +=  + "&boardname=" + _hostname;
+  url +=  + "&boardname=" + _hostname;
 
-  Serial.println( String(host ) + "" + url );
+  Serial.println( String(API_HOST ) + "" + url );
 
-  urlRequest( host, url, 80 );
+  urlRequest( API_HOST, url, 80 );
 
 }
 
@@ -1771,15 +1797,15 @@ void renderDisplay() {
     display.drawBitmap(96, 48, otaIcon, 32, 16, WHITE );
   }
 
-  if( hasDevice( 57 ) ){
+  if ( hasDevice( 57 ) ) {
     display.println( " LUX: " + String( _lastLUXReading ) + "" );
   }
 
-  if( hasDevice( 119 ) ){
+  if ( hasDevice( 119 ) ) {
     display.println( "Temp: " + String( _lastTempF ) + "'F" );
   }
 
-  
+
   display.display();
 }
 
@@ -2015,45 +2041,47 @@ void handleButtons() {
 Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT, 12345);
 
 
-void setupLUXSensor(){
+void setupLUXSensor() {
 
-  
+
   /* Initialise the sensor */
-  if(!tsl.begin())
+  if (!tsl.begin())
   {
     /* There was a problem detecting the ADXL345 ... check your connections */
     Serial.print("Ooops, no TSL2561 detected ... Check your wiring or I2C ADDR!");
-    while(1);
+    while (1);
   }
 
   /* You can also manually set the gain or enable auto-gain support */
   // tsl.setGain(TSL2561_GAIN_1X);      /* No gain ... use in bright light to avoid sensor saturation */
   // tsl.setGain(TSL2561_GAIN_16X);     /* 16x gain ... use in low light to boost sensitivity */
   tsl.enableAutoRange(true);            /* Auto-gain ... switches automatically between 1x and 16x */
-  
+
   /* Changing the integration time gives you better sensor resolution (402ms = 16-bit data) */
   tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_13MS);      /* fast but low resolution */
   // tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_101MS);  /* medium resolution and speed   */
   // tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_402MS);  /* 16-bit data but slowest conversions */
 
-  /* Update these values depending on what you've set above! */  
+  /* Update these values depending on what you've set above! */
   Serial.println("------------------------------------");
   Serial.print  ("Gain:         "); Serial.println("Auto");
   Serial.print  ("Timing:       "); Serial.println("13 ms");
   Serial.println("------------------------------------");
 }
 
-void readLUXSensor(){
+void readLUXSensor() {
 
   sensors_event_t event;
   tsl.getEvent(&event);
- 
+
   /* Display the results (light is measured in lux) */
   if (event.light)
   {
     Serial.print(event.light); Serial.println(" lux");
     _lastLUXReading = event.light;
-    
+
+    recordValue( "environment", "lux", String(_lastLUXReading), _hostname );
+
   }
   else
   {
@@ -2061,7 +2089,7 @@ void readLUXSensor(){
        and no reliable data could be generated! */
     Serial.println("Sensor overload");
   }
-  
+
 }
 void loop() {
 
