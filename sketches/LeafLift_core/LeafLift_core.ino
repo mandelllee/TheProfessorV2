@@ -27,7 +27,9 @@
 //    A   : n/a  : n/a : 10  : 9   : MOSI : CS  : MISO : SCLK : GND : 3v : EN : RST : GND : Vin
 //                                   SPI    SPI   SPI    SPI
 //
-
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_TSL2561_U.h>
 #include <MD5.h>
 /*
   This is an OpenSSL-compatible implementation of the RSA Data Security,
@@ -327,7 +329,7 @@ unsigned char* MD5::make_hash(char *arg)
 
 String BOARD_ID = "";
 
-String VERSION = "0.7-pom";
+String VERSION = "0.7-orphan";
 bool TEST_MODE = false;
 
 String chip_id = "";
@@ -408,6 +410,19 @@ void TickCallback() {
 
 
 
+const uint16_t aport = 8266;
+//WiFiServer TelnetServer(aport);
+//WiFiClient Telnet;
+//
+//
+//void printDebug(const char* c){
+////Prints to telnet if connected
+//  Serial.println(c);
+// 
+//  if (Telnet && Telnet.connected()){
+//    Telnet.println(c);
+//  } //- See more at: http://www.esp8266.com/viewtopic.php?f=8&t=5597#sthash.ITMN1A9x.dpuf
+//}
 
 
 void setupOTAUpdate() {
@@ -426,13 +441,11 @@ void setupOTAUpdate() {
 
 
   // No authentication by default
-  // ArduinoOTA.setPassword((const char *)"123");
+  //ArduinoOTA.setPassword( (const char *)"123" );
 
   ArduinoOTA.onStart([]() {
 
     recordValue( "firmware", "install-ota", "start", "?");
-
-
     _renderDisplayEnabled = false;
     Serial.println("Start");
   });
@@ -533,6 +546,7 @@ void setupSoilSensor() {
   //pinMode(10, OUTPUT);
 
 }
+int _lastLUXReading;
 int numSoilSamples = 5;
 int _soilMoistureReadings[5] = {0, 0, 0, 0, 0};
 int _soilMoistureReadingIndex = 0;
@@ -1231,6 +1245,11 @@ void SensorCallback() {
 
   //readTemperatureSensors();
   if (_soilSensorEnabled) readSoilSensor();
+
+if( hasDevice( 57 ) ){
+  readLUXSensor();
+}
+
 }
 
 
@@ -1386,10 +1405,14 @@ void setup() {
     Serial.println("Luminosity/Lux Sensor [41]");
   }
 
-  if ( hasDevice( 199 ) ) {
+  if ( hasDevice( 119 ) ) {
     Serial.println("[BMP085] BMP180 Barometric Pressure, Temp, Altitude");
   }
 
+  if( hasDevice( 57 ) ){
+    Serial.println("[TSL2561] TSL2561 LUX Sensor");
+    setupLUXSensor();  
+  }
   if (_soilSensorEnabled) setupSoilSensor();
 
   setupWiFi();
@@ -1699,6 +1722,10 @@ void renderDisplay() {
 
     display.drawBitmap(96, 48, otaIcon, 32, 16, WHITE );
   }
+
+  if( hasDevice( 57 ) ){
+    display.println( "\nLUX: " + String( _lastLUXReading ) + "" );
+  }
   display.display();
 }
 
@@ -1930,8 +1957,61 @@ void handleButtons() {
     mcp.digitalWrite( ledPins[n], buttonstates[n] );
   }
 }
+
+Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT, 12345);
+
+
+void setupLUXSensor(){
+
+  
+  /* Initialise the sensor */
+  if(!tsl.begin())
+  {
+    /* There was a problem detecting the ADXL345 ... check your connections */
+    Serial.print("Ooops, no TSL2561 detected ... Check your wiring or I2C ADDR!");
+    while(1);
+  }
+
+  /* You can also manually set the gain or enable auto-gain support */
+  // tsl.setGain(TSL2561_GAIN_1X);      /* No gain ... use in bright light to avoid sensor saturation */
+  // tsl.setGain(TSL2561_GAIN_16X);     /* 16x gain ... use in low light to boost sensitivity */
+  tsl.enableAutoRange(true);            /* Auto-gain ... switches automatically between 1x and 16x */
+  
+  /* Changing the integration time gives you better sensor resolution (402ms = 16-bit data) */
+  tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_13MS);      /* fast but low resolution */
+  // tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_101MS);  /* medium resolution and speed   */
+  // tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_402MS);  /* 16-bit data but slowest conversions */
+
+  /* Update these values depending on what you've set above! */  
+  Serial.println("------------------------------------");
+  Serial.print  ("Gain:         "); Serial.println("Auto");
+  Serial.print  ("Timing:       "); Serial.println("13 ms");
+  Serial.println("------------------------------------");
+}
+
+void readLUXSensor(){
+
+  sensors_event_t event;
+  tsl.getEvent(&event);
+ 
+  /* Display the results (light is measured in lux) */
+  if (event.light)
+  {
+    Serial.print(event.light); Serial.println(" lux");
+    _lastLUXReading = event.light;
+    
+  }
+  else
+  {
+    /* If event.light = 0 lux the sensor is probably saturated
+       and no reliable data could be generated! */
+    Serial.println("Sensor overload");
+  }
+  
+}
 void loop() {
 
+  //printDebug("Loop");
   handleBluetooth();
 
   //pinValues = read_shift_regs();
