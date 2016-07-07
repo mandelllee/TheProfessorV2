@@ -30,6 +30,7 @@
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_TSL2561_U.h>
+#include <Adafruit_BMP085.h>
 #include <MD5.h>
 /*
   This is an OpenSSL-compatible implementation of the RSA Data Security,
@@ -327,6 +328,7 @@ unsigned char* MD5::make_hash(char *arg)
 
 #include "Adafruit_MCP23017.h"
 
+
 String BOARD_ID = "";
 
 String VERSION = "0.7-orphan";
@@ -555,6 +557,50 @@ int _lastSoilMoistureReading = 0;
 int _soilMoistureReading = 0;
 bool _soilSensorEnabled = false;
 String _soilState = "?";
+
+Adafruit_BMP085 bmp;
+
+
+void setupBMP085Sensor(){
+  if (!bmp.begin()) {
+    Serial.println("Could not find a valid BMP085 sensor, check wiring!");
+    while (1) {}
+  }
+}
+int _lastTempC;
+int _lastTempF;
+
+void readBMP085Sensor(){
+
+    Serial.print("Temperature = ");
+    Serial.print(bmp.readTemperature());
+    Serial.println(" *C");
+    _lastTempC = bmp.readTemperature();
+    _lastTempF = (_lastTempC * 1.8) + 32;
+     
+    Serial.print("Pressure = ");
+    Serial.print(bmp.readPressure());
+    Serial.println(" Pa");
+    
+    // Calculate altitude assuming 'standard' barometric
+    // pressure of 1013.25 millibar = 101325 Pascal
+    Serial.print("Altitude = ");
+    Serial.print(bmp.readAltitude());
+    Serial.println(" meters");
+
+    Serial.print("Pressure at sealevel (calculated) = ");
+    Serial.print(bmp.readSealevelPressure());
+    Serial.println(" Pa");
+
+  // you can get a more precise measurement of altitude
+  // if you know the current sea level pressure which will
+  // vary with weather and such. If it is 1015 millibars
+  // that is equal to 101500 Pascals.
+    Serial.print("Real altitude = ");
+    Serial.print(bmp.readAltitude(101500));
+    Serial.println(" meters");
+    
+}
 
 void readSoilSensor() {
 
@@ -1249,7 +1295,9 @@ void SensorCallback() {
 if( hasDevice( 57 ) ){
   readLUXSensor();
 }
-
+ if( hasDevice( 119 ) ){
+  readBMP085Sensor();
+ }
 }
 
 
@@ -1405,18 +1453,18 @@ void setup() {
     Serial.println("Luminosity/Lux Sensor [41]");
   }
 
-  if ( hasDevice( 119 ) ) {
-    Serial.println("[BMP085] BMP180 Barometric Pressure, Temp, Altitude");
+  if( hasDevice( 57 ) ){
+    Serial.println("[BMP085] Temp Sensor");
+    setupLUXSensor();  
   }
 
-  if( hasDevice( 57 ) ){
-    Serial.println("[TSL2561] TSL2561 LUX Sensor");
-    setupLUXSensor();  
+  if( hasDevice( 119 ) ){
+    Serial.println("Barometric Pressure, Temp, Altitude");
+    setupBMP085Sensor();
   }
   if (_soilSensorEnabled) setupSoilSensor();
 
   setupWiFi();
-
 
   if ( _bluetoothEnabled ) setupBluetooth();
 
@@ -1709,7 +1757,7 @@ void renderDisplay() {
   }
 
   if ( _soilSensorEnabled ) {
-    display.println( "\nSoil: " + String( _lastSoilMoistureReading ) + "" );
+    display.println( "Soil: " + String( _lastSoilMoistureReading ) + "" );
   }
   if (bluetoothAvailable) {
     //     display.setCursor(100, 0);
@@ -1724,8 +1772,14 @@ void renderDisplay() {
   }
 
   if( hasDevice( 57 ) ){
-    display.println( "\nLUX: " + String( _lastLUXReading ) + "" );
+    display.println( " LUX: " + String( _lastLUXReading ) + "" );
   }
+
+  if( hasDevice( 119 ) ){
+    display.println( "Temp: " + String( _lastTempF ) + "'F" );
+  }
+
+  
   display.display();
 }
 
