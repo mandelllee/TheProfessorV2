@@ -152,6 +152,8 @@ void TickCallback() {
 //  } //- See more at: http://www.esp8266.com/viewtopic.php?f=8&t=5597#sthash.ITMN1A9x.dpuf
 //}
 
+#include "leaflift_api.h"
+
 #include "leaflift_OTA.h"
 
 void __setupWiFi() {
@@ -231,6 +233,7 @@ bool _enableTempProbes = false;
 String _soilState = "?";
 
 Adafruit_BMP085 bmp;
+
 
 
 void setupBMP085Sensor() {
@@ -355,143 +358,7 @@ void testSwitches() {
     //delay( 2000 );
   }
 }
-
-char ch;
-bool bluetoothAvailable = false;
-void setupBluetooth() {
-
-  displayTextOnDisplay("initializing\nBluetooth...\n");
-
-  Serial.println("initializing Bluetooth...");
-  // set the data rate for the SoftwareSerial port
-  BT.begin(9600);
-
-  delay( 1 * 1000);
-  //
-  //  BT.println( "AT" );
-  //  delay(1000);
-  //  BT.println( "AT+NAME" );
-  //  delay(1000);
-  //
-  String ok = sendATCommand( "AT", "OK", 10 * 1000 );
-  if ( ok == "OK") {
-    bluetoothAvailable = true;
-    Serial.println("Found BT module.");
-    Serial.println("Setting name: " + String(_hostname) );
-    addTextToDisplay( " + Found Adapter" );
-    addTextToDisplay( " + Setting name to [" + String(_hostname) + "]" );
-
-    String r = sendATCommand( "AT+NAME" + String(_hostname), "OKsetname", 2000 );
-    //BT.print("AT+NAME" + String(_hostname)  );
-    //BT.print("AT+NAME");
-    //delay(600);
-    Serial.print("BT Name: " + r );
-    addTextToDisplay( "response: " + String( r ) );
-
-    String b = sendATCommand( "AT+BAUD8", "OKsetbaud", 2000 );
-
-    // Send test message to other device
-    //BT.println( getJSONStatus() );
-  } else {
-    Serial.println("BT not available");
-  }
-  delay( 1000 );
-}
-
-String sendATCommand(String command, String expectedResponse, int timeout ) {
-  Serial.println("> " + command );
-  addTextToDisplay( "> " + command + "\n" );
-  int timeoutTime = millis() + timeout;
-  String response = "";
-  int count = 0;
-  int len = expectedResponse.length();
-
-  BT.print( command );
-
-  while (1) {
-
-    if ( millis() >= timeoutTime ) {
-
-      addTextToDisplay( "Timeout.\n" );
-      Serial.println("Command timeout.");
-      break;
-      return "";
-    }
-    if ( BT.available() ) {
-      ch = BT.read();
-      count++;
-      response += ch;
-      Serial.print( "[" + String(ch) + "]" );
-      if ( count == len ) {
-        addTextToDisplay( "" + response );
-        Serial.print( "\n" );
-        break;
-      }
-    }
-    delay(10);
-  }
-
-  Serial.println("response: " + response );
-
-  return response;
-}
-int switch_state = 0;
-
-
-
-char a; // stores incoming character from other device
-String bt_command = "";
-String bt_string = "";
-
-bool haveCommand = false;
-bool btWelcomeSent = false;
-void handleBluetooth()
-{
-  if (BT.available()) {
-    a = (BT.read());
-
-    if ( a == '\n' ) {
-      haveCommand = true;
-    } else {
-      bt_command += a;
-      //Serial.println("BT data: [" + String(a) + "]");
-    }
-  }
-
-  if ( haveCommand ) {
-    Serial.println( "BT RECIEVED: " + bt_command );
-    haveCommand = false;
-
-    delay(10);
-    //BT.println( bt_command );
-    bt_command.replace( "\n", "");
-    bt_command.replace( "\r", "");
-
-    if ( bt_command == "?\n" || bt_command == "?" ) {
-      Serial.println("Status COMMAND DETECTED");
-      BT.println( getJSONStatus() );
-
-    } else if ( bt_command == "AT\n" || bt_command == "AT" ) {
-
-      BT.println("AT COMMAND DETECTED");
-      delay(250);
-    } else if ( bt_command == "TOGGLE" || bt_command == "T" ) {
-
-      BT.println("TOGGLE COMMAND DETECTED");
-      toggleAllSwitches();
-      BT.print("New state: " + String(switch_state) );
-
-    } else {
-
-      BT.println( getJSONStatus("unknown command: " + bt_command ) );
-    }
-
-    bt_string = bt_command;
-    a = 0;
-    bt_command = "";
-  }
-
-}
+#include "leaflift_bluetooth.h"
 
 void toggleAllSwitches() {
 
@@ -532,7 +399,6 @@ void setupHTTPServer() {
     server.send(200, "text/plain", getJSONStatus() );
   });
 
-
   server.on("/config.json", []() {
     server.send(200, "application/json", getJSONStatus() );
   });
@@ -549,9 +415,7 @@ void setupHTTPServer() {
   });
 
   server.on("/provision", []() {
-
     provisionDevice();
-
   });
 
   server.on("/nodeconfig/api_enabled/0", []() {
@@ -614,7 +478,6 @@ void setupHTTPServer() {
     sendStatusJSON( "soilsensor ENABLED" );
   });
 
-
   server.on("/nodeconfig/ph_sensor/0", []() {
     _phSensorEnabled = false;
     sendStatusJSON( "pH sensor DISABLED");
@@ -623,7 +486,6 @@ void setupHTTPServer() {
     _phSensorEnabled = true;
     sendStatusJSON( "pH sensor ENABLED" );
   });
-
 
 
   //TODO: handle hostname
@@ -650,8 +512,6 @@ void setupHTTPServer() {
     mcp.digitalWrite( 1, LOW );
   });
 
-
-
   server.on("/switch/2/0", []() {
     server.send(200, "text/plain", "1" );
     Serial.println("Setting switch [2] 0 ");
@@ -662,7 +522,6 @@ void setupHTTPServer() {
     Serial.println("Setting switch [2] 1 ");
     mcp.digitalWrite( 2, LOW );
   });
-
 
   server.on("/switch/3/0", []() {
     server.send(200, "text/plain", "1" );
@@ -675,30 +534,26 @@ void setupHTTPServer() {
     mcp.digitalWrite( 3, LOW );
   });
 
-
   server.begin();
-
-
 }
-
 
 
 String get_i2cString() {
   String i2c_string = "";
-
   for (int n = 0; n < 10; n++) {
     if ( i2c_devices[n] > 0 ) {
-
       if (i2c_string.length() > 0) i2c_string += ",";
       i2c_string += "" + String( i2c_devices[n] ) + "";
-
     }
   }
   return i2c_string;
 }
+
+
 String getJSONStatus( ) {
   return getJSONStatus("");
 }
+
 String getJSONStatus( String msg )
 {
   String i2c_string = get_i2cString();
@@ -726,30 +581,6 @@ String getJSONStatus( String msg )
   data += " }";
   return data;
 
-}
-
-int shiftOutDataPin = 15;
-int shiftOutClockPin = 13;
-int shiftOutLatchPin = 12;
-
-byte lastShiftValue = -1;
-void setupShiftOut() {
-
-  pinMode(shiftOutDataPin, OUTPUT);
-  pinMode(shiftOutLatchPin, OUTPUT);
-  pinMode(shiftOutClockPin, OUTPUT);
-
-  updateShiftRegister( 255 );
-}
-
-void updateShiftRegister( byte b ) {
-  if ( b == lastShiftValue ) {
-    return;
-  }
-  lastShiftValue = b;
-  digitalWrite(shiftOutLatchPin, LOW);
-  shiftOut(shiftOutDataPin, shiftOutClockPin, LSBFIRST, b);
-  digitalWrite(shiftOutLatchPin, HIGH);
 }
 
 #include "leaflift_ph.h"
@@ -1100,79 +931,6 @@ void updateSwitchStatus( String switch_number, bool state ) {
   char host[] = "gbsx.net";
   //urlRequest( "10.5.1.105", "/switch/"+switch_number+"/" + (state?"on":"off") );
   //urlRequest( "10.5.1.105", "/switch/"+switch_number+"/toggle" );
-}
-void provisionDevice() {
-
-  //char host[] = "10.5.1.25";
-  //int port = 3000;
-  //char host[] = "api-quadroponic.rhcloud.com";
-  //int port = 80;
-
-  String url = "/v1/provision?type=node";
-
-  url += "&nodeid=" + BOARD_ID;
-  url += "&platform=arduino";
-  url += "&hardware=ESP8266";
-  url += "&boardid=" + chip_id;
-
-  url += "&core_version=" + VERSION;
-  url +=  + "&boardname=" + _hostname;
-
-  Serial.println( String(API_HOST ) + "" + url );
-
-  urlRequest( API_HOST, url, API_PORT );
-}
-
-void recordValue(  String ty, String propertyname, String value, String id_value ) {
-
-  if ( SEND_DATA_TO_API == false ) {
-    Serial.println("API disbaled");
-    return;
-  }
-  //char host[] = "10.5.1.25";
-  //  char host[] = API_HOST;
-
-  String url = "/v1/record?type=" + String(ty) + "&propertyname=" + String(propertyname)  + "&value=" + String(value) + "&id=" + String(id_value) + "&boardid=" + BOARD_ID
-               + "&core_version=" + VERSION;
-  url +=  + "&boardname=" + _hostname;
-
-  Serial.println( String(API_HOST ) + "" + url );
-
-  urlRequest( API_HOST, url, API_PORT );
-
-}
-
-void urlRequest( char host[], String url, int httpPort ) {
-
-  //String url = "/garden/garden.php?uid=" + _userid + "&action=ph&value=" + String(input) + "&tempc=" + String(temp_c) + "&vcc=" + String(voltValue) + "";
-  //char host[] = "gbsx.net";
-
-  // Use WiFiClient class to create TCP connections
-  WiFiClient client;
-  if (!client.connect(host, httpPort)) {
-    Serial.println("connection failed");
-    return;
-  }
-
-  // We now create a URI for the request
-  Serial.print("Requesting URL: ");
-  Serial.println(url);
-
-  // This will send the request to the server
-  client.print( String("GET ") + url + " HTTP/1.1\r\n" +
-                "Host: " + host + "\r\n" +
-                "Connection: close\r\n\r\n");
-  delay(10);
-
-  // Read all the lines of the reply from server and print them to Serial
-  while (client.available()) {
-    String line = client.readStringUntil('\r');
-    Serial.print(line);
-  }
-
-  Serial.println();
-  Serial.println("closing connection");
-
 }
 
 
