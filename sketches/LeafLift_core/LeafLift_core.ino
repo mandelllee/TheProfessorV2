@@ -336,7 +336,10 @@ unsigned char* MD5::make_hash(char *arg)
 
 #include "Adafruit_MCP23017.h"
 
-char API_HOST[] = "api-quadroponic.rhcloud.com";
+//char API_HOST[] = "api-quadroponic.rhcloud.com";
+char API_HOST[] = "10.5.1.25";
+int API_PORT = 3000;
+
 bool SEND_DATA_TO_API = true;
 int SEND_DATA_INTERVAL = 10000;
 
@@ -586,17 +589,20 @@ void setupBMP085Sensor() {
 }
 int _lastTempC;
 int _lastTempF;
-
+double _currentFarenheightEnv = 0.00;
 void readBMP085Sensor() {
 
   Serial.print("Temperature = ");
   Serial.print(bmp.readTemperature());
   Serial.println(" *C");
   _lastTempC = bmp.readTemperature();
-  _lastTempF = (_lastTempC * 1.8) + 32;
-
-  recordValue( "environment", "temperature_f", String(_lastTempF), _hostname );
-
+  
+  int newVal = (_lastTempC * 1.8) + 32;
+  if( newVal != _lastTempF ){
+    _lastTempF = newVal;
+    recordValue( "environment", "temp_f", String(_lastTempF), _hostname );
+  }
+  
   Serial.print("Pressure = ");
   Serial.print(bmp.readPressure());
   Serial.println(" Pa");
@@ -1020,11 +1026,11 @@ void setupHTTPServer() {
   });
 
 
-  server.on("/nodeconfig/ph/0", []() {
+  server.on("/nodeconfig/ph_sensor/0", []() {
     _phSensorEnabled = false;
     sendStatusJSON( "pH sensor DISABLED");
   });
-  server.on("/nodeconfig/ph/1", []() {
+  server.on("/nodeconfig/ph_sensor/1", []() {
     _phSensorEnabled = true;
     sendStatusJSON( "pH sensor ENABLED" );
   });
@@ -1115,6 +1121,9 @@ String getJSONStatus( String msg )
   data += ", \"api_interval\": \"" + String(SEND_DATA_INTERVAL) + "\"";
   data += ", \"api_host\": \"" + String(API_HOST) + "\"";
 
+
+  data += ", \"ph_sensor\": \"" + String(_phSensorEnabled ? "1" : "0") + "\"";
+  data += ", \"temp_probes\": \"" + String(_enableTempProbes ? "1" : "0") + "\"";
 
   data += ", \"uptime_display\": \"" + String(_uptime_display ? "1" : "0") + "\"";
   data += ", \"bluetooth\": \"" + String(bluetoothAvailable ? "1" : "0") + "\"";
@@ -1244,7 +1253,9 @@ void readPhSensor() {
     dtostrf( ph_value_double, 2, 1, ph_string );
     dtostrf( temp_c, 1, 1, temp_c_string );
     updateDisplay();
+
     recordValue( "water", "ph", String(ph_value_double), _hostname );
+    recordValue( "water", "temp_f", String(currentFarenheight), _hostname );
     
     //recordPh( ph_value_double );
   }
@@ -1797,8 +1808,8 @@ void provisionDevice() {
 
   //char host[] = "10.5.1.25";
   //int port = 3000;
-  char host[] = "api-quadroponic.rhcloud.com";
-  int port = 80;
+  //char host[] = "api-quadroponic.rhcloud.com";
+  //int port = 80;
 
   String url = "/v1/provision?type=node";
 
@@ -1810,9 +1821,9 @@ void provisionDevice() {
   url += "&core_version=" + VERSION;
   url +=  + "&boardname=" + _hostname;
 
-  Serial.println( String(host ) + "" + url );
+  Serial.println( String(API_HOST ) + "" + url );
 
-  urlRequest( host, url, port );
+  urlRequest( API_HOST, url, API_PORT );
 }
 
 void recordValue(  String ty, String propertyname, String value, String id_value ) {
@@ -1830,7 +1841,7 @@ void recordValue(  String ty, String propertyname, String value, String id_value
 
   Serial.println( String(API_HOST ) + "" + url );
 
-  urlRequest( API_HOST, url, 80 );
+  urlRequest( API_HOST, url, API_PORT );
 
 }
 
@@ -2301,10 +2312,13 @@ void readLUXSensor() {
   if (event.light)
   {
     Serial.print(event.light); Serial.println(" lux");
-    _lastLUXReading = event.light;
-
+    
+    int newVal = event.light;
+  if( _lastLUXReading != newVal ){
+    _lastLUXReading = newVal;
     recordValue( "environment", "lux", String(_lastLUXReading), _hostname );
-
+  }
+  
   }
   else
   {
