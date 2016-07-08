@@ -27,10 +27,18 @@
 //    A   : n/a  : n/a : 10  : 9   : MOSI : CS  : MISO : SCLK : GND : 3v : EN : RST : GND : Vin
 //                                   SPI    SPI   SPI    SPI
 //
+
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_TSL2561_U.h>
 #include <Adafruit_BMP085.h>
+#include <OneWire.h>
+
+int oneWirePin = 0;
+OneWire  ds(oneWirePin);  //a 2.2K resistor is necessary for 3.3v on the signal line, 4.7k for 5v
+
+
+
 #include <MD5.h>
 /*
   This is an OpenSSL-compatible implementation of the RSA Data Security,
@@ -332,9 +340,12 @@ char API_HOST[] = "api-quadroponic.rhcloud.com";
 bool SEND_DATA_TO_API = true;
 int SEND_DATA_INTERVAL = 10000;
 
+double temp_c = 0.00;
+double ph_value_double = 0.00;
+
 String BOARD_ID = "";
 
-String VERSION = "0.7-beet";
+String VERSION = "0.7-fish";
 bool TEST_MODE = false;
 
 String chip_id = "";
@@ -351,6 +362,8 @@ bool _renderDisplayEnabled = true;
 bool _enableOTAUpdate = true;
 bool _phSensorEnabled = false;
 bool _uptime_display = true;
+String uptime_string = "";
+
 
 #define _TASK_SLEEP_ON_IDLE_RUN
 #define _TASK_STATUS_REQUEST
@@ -559,6 +572,7 @@ int _soilMoistureReadingIndex = 0;
 int _lastSoilMoistureReading = 0;
 int _soilMoistureReading = 0;
 bool _soilSensorEnabled = false;
+bool _enableTempProbes = false;
 String _soilState = "?";
 
 Adafruit_BMP085 bmp;
@@ -932,7 +946,7 @@ void setupHTTPServer() {
   });
 
   server.on("/switches", []() {
-    server.send(200, "text/html", "<html><head><script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js\"></script><script src=\"http://gbsx.net/nodeconfig.js\"></script></head><body></body></html>");
+    server.send(200, "text/html", "<html><head><script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js\"></script><script src=\"http://gbsx.net/switches.js\"></script></head><body></body></html>");
   });
 
   server.on("/config.html", []() {
@@ -988,12 +1002,12 @@ void setupHTTPServer() {
 
   server.on("/nodeconfig/temp_probes/0", []() {
     server.send(200, "text/plain", "1" );
-    Serial.println("OTA DISABLED");
-    _enableOTAUpdate = false;
+    Serial.println("Temp Probes DISABLED");
+    _enableTempProbes = false;
   });
   server.on("/nodeconfig/temp_probes/1", []() {
-    _soilSensorEnabled = true;
-    sendStatusJSON( "Probes Disbaled" );
+    _enableTempProbes = true;
+    sendStatusJSON( "Temp Probes Enabled" );
   });
 
   server.on("/nodeconfig/soil/0", []() {
@@ -1095,19 +1109,20 @@ String getJSONStatus( String msg )
   String i2c_string = get_i2cString();
 
 
-  String data =  "{\"board_id\":\"" + BOARD_ID + "\", \"chip_id\":\"" + chip_id + "\", \"core_version\":\"" + VERSION + "\", \"ip\":\"" + ipAddressString + "\", \"hostname\":\"" + _hostname + "\", \"i2c\":[" + i2c_string + "]";
+  String data =  "{\"board_id\":\"" + BOARD_ID + "\", \"chip_id\":\"" + chip_id + "\",\"uptime\":\"" + uptime_string + "\", \"core_version\":\"" + VERSION + "\", \"ip\":\"" + ipAddressString + "\", \"hostname\":\"" + _hostname + "\", \"i2c\":[" + i2c_string + "]";
 
   data += ", \"api_enabled\": \"" + String(SEND_DATA_TO_API ? "1" : "0") + "\"";
   data += ", \"api_interval\": \"" + String(SEND_DATA_INTERVAL) + "\"";
   data += ", \"api_host\": \"" + String(API_HOST) + "\"";
-  
-  
+
+
   data += ", \"uptime_display\": \"" + String(_uptime_display ? "1" : "0") + "\"";
   data += ", \"bluetooth\": \"" + String(bluetoothAvailable ? "1" : "0") + "\"";
   data += ", \"ota\": \"" + String(_enableOTAUpdate ? "1" : "0") + "\"";
 
   if ( msg.length() > 0) data += ", \"msg\": \"" + msg + "\"";
-
+  if( _enableTempProbes ) data += ", \"temp_c\": \"" + String(temp_c) + "\"";
+  if( _phSensorEnabled ) data += ", \"ph\": \"" + String(ph_value_double) + "\"";
   if ( _soilSensorEnabled ) data += ", \"soil\": { \"state\":\"" + _soilState + "\", \"moisture\":\"" + String(_soilMoistureReading) + "\" } ";
 
   data += " }";
@@ -1150,7 +1165,194 @@ void updateShiftRegister( byte b ) {
 }
 
 
+#define ph_sensor_address 99 //0x63
+double currentFarenheight = 0.00;
+String ph = "";
+float ph_value_float;
 
+char ph_string[16] = "";
+char temp_c_string[16] = "";
+
+String sendPhCommand( char *command ) {
+
+  char out_data[20];
+  byte code = 0;
+  byte in_char = 0;
+  byte i = 0;
+  int time_ = 1800;
+
+  Serial.println("sendPhCommand(" + String(command) + ")...");
+  ///addTextToDisplay( "reading pH..." );
+
+  int _time_ = 1800;
+
+  Wire.beginTransmission(ph_sensor_address);
+  Wire.write( command );
+  Wire.endTransmission();
+  delay(_time_);
+  Wire.requestFrom(ph_sensor_address, 20, 1);
+  code = Wire.read();
+  Serial.println("Response:[" + String(code) + "]" );
+  switch (code) {
+    case 1:
+      Serial.println("Success"); break;
+    case 2: Serial.println("Failed");
+      break;
+    case 254: Serial.println("Pending");
+      break;
+    case 255: Serial.println("No Data");
+      break;
+  }
+  while (Wire.available()) {
+    in_char = Wire.read();
+    out_data[i] = in_char; i += 1;
+    if (in_char == 0) {
+      Wire.endTransmission(); break;
+    }
+  }
+  return String( out_data );
+}
+
+void readPhSensor() {
+  //ph_info = sendPhCommand( "I" );
+  //ph_cal = sendPhCommand( "Cal,?" );
+
+  //ph_status = sendPhCommand( "Status" );
+  //parseStatus( ph_status );
+
+  //  Serial.println("Status: " + ph_status );
+  //  Serial.println("Cal: " + ph_cal );
+  //  Serial.println("Info: " + ph_info );
+
+  Serial.println("Current temp: " + String(temp_c) );
+  if ( temp_c > 0.00 ) {
+    char v[8] = "";
+    String val = "T," + String( temp_c );
+    val.toCharArray( v, 8);
+
+    sendPhCommand( v );
+  } else {
+    sendPhCommand( "T,25.00" );
+  }
+  ph = sendPhCommand( "R" );
+  float p = ph.toFloat();
+  double new_ph_double = roundf( p * 10 ) / 10;
+
+  // is new value different from last ?
+  if ( new_ph_double != ph_value_double ) {
+    ph_value_double = new_ph_double;
+    dtostrf( ph_value_double, 2, 1, ph_string );
+    dtostrf( temp_c, 1, 1, temp_c_string );
+    updateDisplay();
+    recordValue( "water", "ph", String(ph_value_double), _hostname );
+    
+    //recordPh( ph_value_double );
+  }
+
+
+}
+
+
+void readTemperatureSensors(){
+  byte i;
+  byte present = 0;
+  byte type_s;
+  byte data[12];
+  byte addr[8];
+  float celsius, fahrenheit;
+  
+  if ( !ds.search(addr)) {
+    Serial.println("No more addresses.");
+    Serial.println();
+    ds.reset_search();
+    delay(250);
+    return;
+  }
+  
+  Serial.print("ROM =");
+  for( i = 0; i < 8; i++) {
+    Serial.write(' ');
+    Serial.print(addr[i], HEX);
+  }
+
+  if (OneWire::crc8(addr, 7) != addr[7]) {
+      Serial.println("CRC is not valid!");
+      return;
+  }
+  Serial.println();
+ 
+  // the first ROM byte indicates which chip
+  switch (addr[0]) {
+    case 0x10:
+      Serial.println("  Chip = DS18S20");  // or old DS1820
+      type_s = 1;
+      break;
+    case 0x28:
+      Serial.println("  Chip = DS18B20");
+      type_s = 0;
+      break;
+    case 0x22:
+      Serial.println("  Chip = DS1822");
+      type_s = 0;
+      break;
+    default:
+      Serial.println("Device is not a DS18x20 family device.");
+      return;
+  } 
+
+  ds.reset();
+  ds.select(addr);
+  ds.write(0x44, 1);        // start conversion, with parasite power on at the end
+  
+  delay(1000);     // maybe 750ms is enough, maybe not
+  // we might do a ds.depower() here, but the reset will take care of it.
+  
+  present = ds.reset();
+  ds.select(addr);    
+  ds.write(0xBE);         // Read Scratchpad
+
+  Serial.print("  Data = ");
+  Serial.print(present, HEX);
+  Serial.print(" ");
+  for ( i = 0; i < 9; i++) {           // we need 9 bytes
+    data[i] = ds.read();
+    Serial.print(data[i], HEX);
+    Serial.print(" ");
+  }
+  Serial.print(" CRC=");
+  Serial.print(OneWire::crc8(data, 8), HEX);
+  Serial.println();
+
+  // Convert the data to actual temperature
+  // because the result is a 16 bit signed integer, it should
+  // be stored to an "int16_t" type, which is always 16 bits
+  // even when compiled on a 32 bit processor.
+  int16_t raw = (data[1] << 8) | data[0];
+  if (type_s) {
+    raw = raw << 3; // 9 bit resolution default
+    if (data[7] == 0x10) {
+      // "count remain" gives full 12 bit resolution
+      raw = (raw & 0xFFF0) + 12 - data[6];
+    }
+  } else {
+    byte cfg = (data[4] & 0x60);
+    // at lower res, the low bits are undefined, so let's zero them
+    if (cfg == 0x00) raw = raw & ~7;  // 9 bit resolution, 93.75 ms
+    else if (cfg == 0x20) raw = raw & ~3; // 10 bit res, 187.5 ms
+    else if (cfg == 0x40) raw = raw & ~1; // 11 bit res, 375 ms
+    //// default is 12 bit resolution, 750 ms conversion time
+  }
+  celsius = (float)raw / 16.0;
+  fahrenheit = celsius * 1.8 + 32.0;
+
+  currentFarenheight = fahrenheit;
+  temp_c = (double)celsius;
+  Serial.print("  Temperature = ");
+  Serial.print(celsius);
+  Serial.print(" Celsius, ");
+  Serial.print(fahrenheit);
+  Serial.println(" Fahrenheit");
+}
 
 
 
@@ -1311,9 +1513,12 @@ void SensorCallback() {
   n++;
   if (n > 255) n = 0;
 
-  //readTemperatureSensors();
+  if( _enableTempProbes ) readTemperatureSensors();
   if (_soilSensorEnabled) readSoilSensor();
 
+  if ( hasDevice( ph_sensor_address ) ) {
+    readPhSensor();
+  }
   if ( hasDevice( 57 ) ) {
     readLUXSensor();
   }
@@ -1323,111 +1528,107 @@ void SensorCallback() {
 }
 
 
-#include <OneWire.h>
-int oneWirePin = 0;
 
-double currentFarenheight = 0.00;
-
-OneWire  ds(oneWirePin);  //a 2.2K resistor is necessary for 3.3v on the signal line, 4.7k for 5v
-void readTemperatureSensors() {
-  byte i;
-  byte present = 0;
-  byte type_s;
-  byte data[12];
-  byte addr[8];
-  float celsius, fahrenheit;
-
-  if ( !ds.search(addr)) {
-    Serial.println("No more addresses.");
-    Serial.println();
-    ds.reset_search();
-    delay(250);
-    return;
-  }
-
-  Serial.print("ROM =");
-  for ( i = 0; i < 8; i++) {
-    Serial.write(' ');
-    Serial.print(addr[i], HEX);
-  }
-
-  if (OneWire::crc8(addr, 7) != addr[7]) {
-    Serial.println("CRC is not valid!");
-    return;
-  }
-  Serial.println();
-
-  // the first ROM byte indicates which chip
-  switch (addr[0]) {
-    case 0x10:
-      Serial.println("  Chip = DS18S20");  // or old DS1820
-      type_s = 1;
-      break;
-    case 0x28:
-      Serial.println("  Chip = DS18B20");
-      type_s = 0;
-      break;
-    case 0x22:
-      Serial.println("  Chip = DS1822");
-      type_s = 0;
-      break;
-    default:
-      Serial.println("Device is not a DS18x20 family device.");
-      return;
-  }
-
-  ds.reset();
-  ds.select(addr);
-  ds.write(0x44, 1);        // start conversion, with parasite power on at the end
-
-  delay(1000);     // maybe 750ms is enough, maybe not
-  // we might do a ds.depower() here, but the reset will take care of it.
-
-  present = ds.reset();
-  ds.select(addr);
-  ds.write(0xBE);         // Read Scratchpad
-
-  Serial.print("  Data = ");
-  Serial.print(present, HEX);
-  Serial.print(" ");
-  for ( i = 0; i < 9; i++) {           // we need 9 bytes
-    data[i] = ds.read();
-    Serial.print(data[i], HEX);
-    Serial.print(" ");
-  }
-  Serial.print(" CRC=");
-  Serial.print(OneWire::crc8(data, 8), HEX);
-  Serial.println();
-
-  // Convert the data to actual temperature
-  // because the result is a 16 bit signed integer, it should
-  // be stored to an "int16_t" type, which is always 16 bits
-  // even when compiled on a 32 bit processor.
-  int16_t raw = (data[1] << 8) | data[0];
-  if (type_s) {
-    raw = raw << 3; // 9 bit resolution default
-    if (data[7] == 0x10) {
-      // "count remain" gives full 12 bit resolution
-      raw = (raw & 0xFFF0) + 12 - data[6];
-    }
-  } else {
-    byte cfg = (data[4] & 0x60);
-    // at lower res, the low bits are undefined, so let's zero them
-    if (cfg == 0x00) raw = raw & ~7;  // 9 bit resolution, 93.75 ms
-    else if (cfg == 0x20) raw = raw & ~3; // 10 bit res, 187.5 ms
-    else if (cfg == 0x40) raw = raw & ~1; // 11 bit res, 375 ms
-    //// default is 12 bit resolution, 750 ms conversion time
-  }
-  celsius = (float)raw / 16.0;
-  fahrenheit = celsius * 1.8 + 32.0;
-
-  currentFarenheight = fahrenheit;
-  Serial.print("  Temperature = ");
-  Serial.print(celsius);
-  Serial.print(" Celsius, ");
-  Serial.print(fahrenheit);
-  Serial.println(" Fahrenheit");
-}
+//double currentFarenheight = 0.00;
+//void readTemperatureSensors() {
+//  byte i;
+//  byte present = 0;
+//  byte type_s;
+//  byte data[12];
+//  byte addr[8];
+//  float celsius, fahrenheit;
+//
+//  if ( !ds.search(addr)) {
+//    Serial.println("No more addresses.");
+//    Serial.println();
+//    ds.reset_search();
+//    delay(250);
+//    return;
+//  }
+//
+//  Serial.print("ROM =");
+//  for ( i = 0; i < 8; i++) {
+//    Serial.write(' ');
+//    Serial.print(addr[i], HEX);
+//  }
+//
+//  if (OneWire::crc8(addr, 7) != addr[7]) {
+//    Serial.println("CRC is not valid!");
+//    return;
+//  }
+//  Serial.println();
+//
+//  // the first ROM byte indicates which chip
+//  switch (addr[0]) {
+//    case 0x10:
+//      Serial.println("  Chip = DS18S20");  // or old DS1820
+//      type_s = 1;
+//      break;
+//    case 0x28:
+//      Serial.println("  Chip = DS18B20");
+//      type_s = 0;
+//      break;
+//    case 0x22:
+//      Serial.println("  Chip = DS1822");
+//      type_s = 0;
+//      break;
+//    default:
+//      Serial.println("Device is not a DS18x20 family device.");
+//      return;
+//  }
+//
+//  ds.reset();
+//  ds.select(addr);
+//  ds.write(0x44, 1);        // start conversion, with parasite power on at the end
+//
+//  delay(1000);     // maybe 750ms is enough, maybe not
+//  // we might do a ds.depower() here, but the reset will take care of it.
+//
+//  present = ds.reset();
+//  ds.select(addr);
+//  ds.write(0xBE);         // Read Scratchpad
+//
+//  Serial.print("  Data = ");
+//  Serial.print(present, HEX);
+//  Serial.print(" ");
+//  for ( i = 0; i < 9; i++) {           // we need 9 bytes
+//    data[i] = ds.read();
+//    Serial.print(data[i], HEX);
+//    Serial.print(" ");
+//  }
+//  Serial.print(" CRC=");
+//  Serial.print(OneWire::crc8(data, 8), HEX);
+//  Serial.println();
+//
+//  // Convert the data to actual temperature
+//  // because the result is a 16 bit signed integer, it should
+//  // be stored to an "int16_t" type, which is always 16 bits
+//  // even when compiled on a 32 bit processor.
+//  int16_t raw = (data[1] << 8) | data[0];
+//  if (type_s) {
+//    raw = raw << 3; // 9 bit resolution default
+//    if (data[7] == 0x10) {
+//      // "count remain" gives full 12 bit resolution
+//      raw = (raw & 0xFFF0) + 12 - data[6];
+//    }
+//  } else {
+//    byte cfg = (data[4] & 0x60);
+//    // at lower res, the low bits are undefined, so let's zero them
+//    if (cfg == 0x00) raw = raw & ~7;  // 9 bit resolution, 93.75 ms
+//    else if (cfg == 0x20) raw = raw & ~3; // 10 bit res, 187.5 ms
+//    else if (cfg == 0x40) raw = raw & ~1; // 11 bit res, 375 ms
+//    //// default is 12 bit resolution, 750 ms conversion time
+//  }
+//  celsius = (float)raw / 16.0;
+//  fahrenheit = celsius * 1.8 + 32.0;
+//
+//  currentFarenheight = fahrenheit;
+//  Serial.print("  Temperature = ");
+//  Serial.print(celsius);
+//  Serial.print(" Celsius, ");
+//  Serial.print(fahrenheit);
+//  Serial.println(" Fahrenheit");
+//}
 
 bool hasDevice( int address ) {
 
@@ -1542,16 +1743,25 @@ void configureHostname() {
   } else if ( chip_id == "13891932" ) {
     _hostname = "aqua";
     _soilSensorEnabled = false;
-
+    _phSensorEnabled = true;
+    _enableTempProbes = true;
+    
   } else if ( chip_id == "13916356" ) {
     _hostname = "tempo";
     _soilSensorEnabled = false;
+
+
+  } else if ( chip_id == "16044873" ) {
+    _hostname = "taco";
+    _soilSensorEnabled = false;
+
+
 
   } else if ( chip_id == "1626288" ) {
     _hostname = "dino";
     _soilSensorEnabled = false;
 
-    _bluetoothEnabled = true;
+    _bluetoothEnabled = false;
 
     // hack  to have bluetooth enabled
     bluetoothAvailable = true;
@@ -1607,12 +1817,12 @@ void provisionDevice() {
 
 void recordValue(  String ty, String propertyname, String value, String id_value ) {
 
-  if( SEND_DATA_TO_API==false ){
+  if ( SEND_DATA_TO_API == false ) {
     Serial.println("API disbaled");
     return;
   }
   //char host[] = "10.5.1.25";
-//  char host[] = API_HOST;
+  //  char host[] = API_HOST;
 
   String url = "/v1/record?type=" + String(ty) + "&propertyname=" + String(propertyname)  + "&value=" + String(value) + "&id=" + String(id_value) + "&boardid=" + BOARD_ID
                + "&core_version=" + VERSION;
@@ -1740,6 +1950,7 @@ const unsigned char launchScreen [] PROGMEM = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 
 };
+
 void renderDisplay() {
   if ( _renderDisplayEnabled == false ) return;
   display.clearDisplay();
@@ -1771,8 +1982,9 @@ void renderDisplay() {
   String hours = (h < 10 ? "0" : "") + String( h );
   String minutes = (m < 10 ? "0" : "") + String( m );
   String seconds = (s < 10 ? "0" : "") + String( s );
-
-  if ( _uptime_display ) display.println( "  UP: " + hours + ":" + minutes + ":" + seconds );
+  uptime_string = hours + ":" + minutes + ":" + seconds;
+  
+  if ( _uptime_display ) display.println( "  UP: " + uptime_string );
 
   display.println( " I2C: " + String(  get_i2cString() ) );
 
@@ -1782,6 +1994,17 @@ void renderDisplay() {
     //renderIOInterface();
   }
 
+  if( _enableTempProbes ){
+    //display.println( "Temp: " + String( temp_c ) + "'C" );
+    display.println( "Temp: " + String( currentFarenheight ) + "'F" );
+    
+  }
+  if( _phSensorEnabled ){
+    display.println( "  pH: " + String(ph_value_double) + "" );
+  }
+
+  
+  
   if ( _soilSensorEnabled ) {
     display.println( "Soil: " + String( _lastSoilMoistureReading ) + "" );
   }
