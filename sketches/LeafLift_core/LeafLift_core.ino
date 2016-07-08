@@ -40,7 +40,6 @@ OneWire  ds(oneWirePin);  //a 2.2K resistor is necessary for 3.3v on the signal 
 
 #include "leaflift_crypto.h"
 
-
 #include "Adafruit_MCP23017.h"
 
 //char API_HOST[] = "api-quadroponic.rhcloud.com";
@@ -153,63 +152,8 @@ void TickCallback() {
 //  } //- See more at: http://www.esp8266.com/viewtopic.php?f=8&t=5597#sthash.ITMN1A9x.dpuf
 //}
 
+#include "leaflift_OTA.h"
 
-void setupOTAUpdate() {
-
-  // Port defaults to 8266
-  // ArduinoOTA.setPort(8266);
-
-  char hn[_hostname.length() + 1];
-  memset(hn, 0, _hostname.length() + 1);
-
-  for (int i = 0; i < _hostname.length(); i++)
-    hn[i] = _hostname.charAt(i);
-
-  // Hostname defaults to esp8266-[ChipID]
-  ArduinoOTA.setHostname( hn );
-
-
-  // No authentication by default
-  //ArduinoOTA.setPassword( (const char *)"123" );
-
-  ArduinoOTA.onStart([]() {
-
-    recordValue( "firmware", "install-ota", "start", "?");
-    _renderDisplayEnabled = false;
-    Serial.println("Start");
-  });
-  ArduinoOTA.onEnd([]() {
-    Serial.println("\nEnd");
-    recordValue( "firmware", "install-ota", "complete", "?");
-
-
-    recordValue( "system", "status", "reboot", "?");
-
-    Serial.println("\Rebooting");
-    displayTextOnDisplay( "\n\nRebooting..." );
-
-    ESP.restart();
-  });
-  ArduinoOTA.onProgress(firmwareProgress);
-  ArduinoOTA.onError([](ota_error_t error) {
-    Serial.printf("Error[%u]: ", error);
-    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-    else if (error == OTA_END_ERROR) Serial.println("End Failed");
-  });
-  ArduinoOTA.begin();
-}
-
-void firmwareProgress(unsigned int progress, unsigned int total) {
-  Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-
-  //display.clearDisplay();
-  displayTextOnDisplay( "\nUpdating Firmware...\n\n  " +  String( progress / (total / 100) ) + "%" );
-
-
-};
 void __setupWiFi() {
 
 
@@ -334,70 +278,7 @@ void readBMP085Sensor() {
   Serial.println(" meters");
 
 }
-
-void readSoilSensor() {
-
-  Serial.println("POWER ON SOIL SENSOR MCP[3]");
-  //digitalWrite( 10, HIGH );
-  mcp.digitalWrite(3, HIGH);
-
-  Serial.println("WAIT 2 SECONDS....");
-  //TODO: make this use a task instead of a delay
-  delay(2000);
-
-  int s = analogRead(A0); //take a sample
-  Serial.println("reading: [" + String(s) + "]" );
-
-  _lastSoilMoistureReading = s;
-  _soilMoistureReading = s;
-
-  _soilMoistureReadings[_soilMoistureReadingIndex] = s;
-  _soilMoistureReadingIndex++;
-  if ( _soilMoistureReadingIndex > numSoilSamples ) _soilMoistureReadingIndex = 0;
-
-  //  bool allGood = true;
-  //  while ( allGood ) {
-  //    int total = 0;
-  //    for (int n = 0; n < numSoilSamples; n++) {
-  //
-  //      Serial.println("not enough samples to give a value");
-  //      int reading = _soilMoistureReadings[_soilMoistureReadingIndex];
-  //
-  //      if ( reading == 0 ) {
-  //        Serial.println("not enough samples to give a value");
-  //        allGood = false;
-  //      } else {
-  //        total += reading;
-  //      }
-  //    }
-  //    Serial.println("We have enough samples to give a value");
-  //    _soilMoistureReading = total / numSoilSamples;
-  //    allGood = false;
-  //  }
-
-  if (s >= 1000) {
-    _soilState = "?";
-    //Serial.println("Sensor is not in the Soil or DISCONNECTED");
-
-  }
-  if (s < 1000 && s >= 600) {
-    //Serial.println("Soil is DRY");
-    _soilState = "DRY";
-  }
-  if (s < 600 && s >= 370) {
-    //Serial.println("Soil is HUMID");
-    _soilState = "HUMID";
-  }
-  if (s < 370) {
-    //Serial.println("Sensor in WATER");
-    _soilState = "WET";
-  }
-
-  Serial.println("POWER OFF SOIL SENSOR MCP[3]");
-  //digitalWrite( 10, LOW );
-  mcp.digitalWrite(3, LOW);
-}
-
+#include "leaflift_soil.h"
 
 void setupIO() {
   mcp.begin();      // use default address 0
@@ -847,16 +728,6 @@ String getJSONStatus( String msg )
 
 }
 
-#include <SPI.h>            // For SPI comm (needed for not getting compile error)
-//#include <Adafruit_GFX.h>   // Needs a little change in original Adafruit library (See README.txt file)
-#include <ESP_SSD1306.h>    // Modification of Adafruit_SSD1306 for ESP8266 compatibility
-
-//#define OLED_CS     15  // Pin 19, CS - Chip select
-//#define OLED_DC     2   // Pin 20 - DC digital signal
-#define OLED_RESET  12  // Pin 15 -RESET digital signal
-
-ESP_SSD1306 display(OLED_RESET);
-
 int shiftOutDataPin = 15;
 int shiftOutClockPin = 13;
 int shiftOutLatchPin = 12;
@@ -881,95 +752,7 @@ void updateShiftRegister( byte b ) {
   digitalWrite(shiftOutLatchPin, HIGH);
 }
 
-
-#define ph_sensor_address 99 //0x63
-double currentFarenheight = 0.00;
-String ph = "";
-float ph_value_float;
-
-char ph_string[16] = "";
-char temp_c_string[16] = "";
-
-String sendPhCommand( char *command ) {
-
-  char out_data[20];
-  byte code = 0;
-  byte in_char = 0;
-  byte i = 0;
-  int time_ = 1800;
-
-  Serial.println("sendPhCommand(" + String(command) + ")...");
-  ///addTextToDisplay( "reading pH..." );
-
-  int _time_ = 1800;
-
-  Wire.beginTransmission(ph_sensor_address);
-  Wire.write( command );
-  Wire.endTransmission();
-  delay(_time_);
-  Wire.requestFrom(ph_sensor_address, 20, 1);
-  code = Wire.read();
-  Serial.println("Response:[" + String(code) + "]" );
-  switch (code) {
-    case 1:
-      Serial.println("Success"); break;
-    case 2: Serial.println("Failed");
-      break;
-    case 254: Serial.println("Pending");
-      break;
-    case 255: Serial.println("No Data");
-      break;
-  }
-  while (Wire.available()) {
-    in_char = Wire.read();
-    out_data[i] = in_char; i += 1;
-    if (in_char == 0) {
-      Wire.endTransmission(); break;
-    }
-  }
-  return String( out_data );
-}
-
-void readPhSensor() {
-  //ph_info = sendPhCommand( "I" );
-  //ph_cal = sendPhCommand( "Cal,?" );
-
-  //ph_status = sendPhCommand( "Status" );
-  //parseStatus( ph_status );
-
-  //  Serial.println("Status: " + ph_status );
-  //  Serial.println("Cal: " + ph_cal );
-  //  Serial.println("Info: " + ph_info );
-
-  Serial.println("Current temp: " + String(temp_c) );
-  if ( temp_c > 0.00 ) {
-    char v[8] = "";
-    String val = "T," + String( temp_c );
-    val.toCharArray( v, 8);
-
-    sendPhCommand( v );
-  } else {
-    sendPhCommand( "T,25.00" );
-  }
-  ph = sendPhCommand( "R" );
-  float p = ph.toFloat();
-  double new_ph_double = roundf( p * 10 ) / 10;
-
-  // is new value different from last ?
-  if ( new_ph_double != ph_value_double ) {
-    ph_value_double = new_ph_double;
-    dtostrf( ph_value_double, 2, 1, ph_string );
-    dtostrf( temp_c, 1, 1, temp_c_string );
-    updateDisplay();
-
-    recordValue( "water", "ph", String(ph_value_double), _hostname );
-    recordValue( "water", "temp_f", String(currentFarenheight), _hostname );
-    
-    //recordPh( ph_value_double );
-  }
-
-
-}
+#include "leaflift_ph.h"
 
 
 void readTemperatureSensors(){
@@ -1074,83 +857,7 @@ void readTemperatureSensors(){
 }
 
 
-
-
-/* How many shift register chips are daisy-chained.
-*/
-#define NUMBER_OF_SHIFT_CHIPS   1
-
-/* Width of data (how many ext lines).
-*/
-#define DATA_WIDTH   NUMBER_OF_SHIFT_CHIPS * 8
-
-/* Width of pulse to trigger the shift register to read and latch.
-*/
-#define PULSE_WIDTH_USEC   5
-
-/* Optional delay between shift register reads.
-*/
-#define POLL_DELAY_MSEC   1
-
-/* You will need to change the "int" to "long" If the
-   NUMBER_OF_SHIFT_CHIPS is higher than 2.
-*/
-#define BYTES_VAL_T unsigned int
-
-int shiftInDataPin = 10;
-int shiftInClockPin = 14;
-int shiftInClockEnablePin = 2;
-int shiftInLoadPin = 16;
-
-void setupShiftIn() {
-  pinMode(shiftInLoadPin, OUTPUT);
-  pinMode(shiftInClockEnablePin, OUTPUT);
-  pinMode(shiftInClockPin, OUTPUT);
-  pinMode(shiftInDataPin, INPUT);
-}
-
-BYTES_VAL_T pinValues;
-BYTES_VAL_T oldPinValues;
-BYTES_VAL_T outValues = 0;
-/* This function is essentially a "shift-in" routine reading the
-   serial Data from the shift register chips and representing
-   the state of those pins in an unsigned integer (or long).
-*/
-BYTES_VAL_T read_shift_regs()
-{
-  long bitVal;
-  BYTES_VAL_T bytesVal = 0;
-
-  /* Trigger a parallel Load to latch the state of the data lines,
-  */
-  digitalWrite(shiftInClockEnablePin, LOW);
-  digitalWrite(shiftInLoadPin, LOW);
-  delayMicroseconds(PULSE_WIDTH_USEC);
-  digitalWrite(shiftInLoadPin, HIGH);
-  digitalWrite(shiftInClockEnablePin, LOW);
-
-  /* Loop to read each bit value from the serial out line
-     of the SN74HC165N.
-  */
-  for (int i = 0; i < DATA_WIDTH; i++)
-  {
-    bitVal = digitalRead(shiftInDataPin);
-
-    /* Set the corresponding bit in bytesVal.
-    */
-    bytesVal |= (bitVal << ((DATA_WIDTH - 1) - i));
-
-    /* Pulse the Clock (rising edge shifts the next bit).
-    */
-    digitalWrite(shiftInClockPin, HIGH);
-    delayMicroseconds(PULSE_WIDTH_USEC);
-    digitalWrite(shiftInClockPin, LOW);
-  }
-
-  return (bytesVal);
-}
 void scanI2C() {
-
   Wire.begin();
   byte error, address;
   Serial.println("Scanning...");
@@ -1193,7 +900,6 @@ void scanI2C() {
   } else {
     Serial.println("done\n");
   }
-
   //delay( 2000 );
 }
 
@@ -1209,7 +915,6 @@ bool switch4 = false;
 
 int n = 0;
 
-
 Scheduler ts;
 Scheduler sensorScheduler;
 
@@ -1219,10 +924,8 @@ Task tCycle( 1000, TASK_FOREVER, &CycleCallback, &ts, true);
 Task tSensor( 10000, TASK_FOREVER, &SensorCallback, &sensorScheduler, true);
 
 void CycleCallback() {
-
   n++;
   if (n > 255) n = 0;
-
   renderDisplay();
 }
 
@@ -1246,108 +949,6 @@ void SensorCallback() {
   }
 }
 
-
-
-//double currentFarenheight = 0.00;
-//void readTemperatureSensors() {
-//  byte i;
-//  byte present = 0;
-//  byte type_s;
-//  byte data[12];
-//  byte addr[8];
-//  float celsius, fahrenheit;
-//
-//  if ( !ds.search(addr)) {
-//    Serial.println("No more addresses.");
-//    Serial.println();
-//    ds.reset_search();
-//    delay(250);
-//    return;
-//  }
-//
-//  Serial.print("ROM =");
-//  for ( i = 0; i < 8; i++) {
-//    Serial.write(' ');
-//    Serial.print(addr[i], HEX);
-//  }
-//
-//  if (OneWire::crc8(addr, 7) != addr[7]) {
-//    Serial.println("CRC is not valid!");
-//    return;
-//  }
-//  Serial.println();
-//
-//  // the first ROM byte indicates which chip
-//  switch (addr[0]) {
-//    case 0x10:
-//      Serial.println("  Chip = DS18S20");  // or old DS1820
-//      type_s = 1;
-//      break;
-//    case 0x28:
-//      Serial.println("  Chip = DS18B20");
-//      type_s = 0;
-//      break;
-//    case 0x22:
-//      Serial.println("  Chip = DS1822");
-//      type_s = 0;
-//      break;
-//    default:
-//      Serial.println("Device is not a DS18x20 family device.");
-//      return;
-//  }
-//
-//  ds.reset();
-//  ds.select(addr);
-//  ds.write(0x44, 1);        // start conversion, with parasite power on at the end
-//
-//  delay(1000);     // maybe 750ms is enough, maybe not
-//  // we might do a ds.depower() here, but the reset will take care of it.
-//
-//  present = ds.reset();
-//  ds.select(addr);
-//  ds.write(0xBE);         // Read Scratchpad
-//
-//  Serial.print("  Data = ");
-//  Serial.print(present, HEX);
-//  Serial.print(" ");
-//  for ( i = 0; i < 9; i++) {           // we need 9 bytes
-//    data[i] = ds.read();
-//    Serial.print(data[i], HEX);
-//    Serial.print(" ");
-//  }
-//  Serial.print(" CRC=");
-//  Serial.print(OneWire::crc8(data, 8), HEX);
-//  Serial.println();
-//
-//  // Convert the data to actual temperature
-//  // because the result is a 16 bit signed integer, it should
-//  // be stored to an "int16_t" type, which is always 16 bits
-//  // even when compiled on a 32 bit processor.
-//  int16_t raw = (data[1] << 8) | data[0];
-//  if (type_s) {
-//    raw = raw << 3; // 9 bit resolution default
-//    if (data[7] == 0x10) {
-//      // "count remain" gives full 12 bit resolution
-//      raw = (raw & 0xFFF0) + 12 - data[6];
-//    }
-//  } else {
-//    byte cfg = (data[4] & 0x60);
-//    // at lower res, the low bits are undefined, so let's zero them
-//    if (cfg == 0x00) raw = raw & ~7;  // 9 bit resolution, 93.75 ms
-//    else if (cfg == 0x20) raw = raw & ~3; // 10 bit res, 187.5 ms
-//    else if (cfg == 0x40) raw = raw & ~1; // 11 bit res, 375 ms
-//    //// default is 12 bit resolution, 750 ms conversion time
-//  }
-//  celsius = (float)raw / 16.0;
-//  fahrenheit = celsius * 1.8 + 32.0;
-//
-//  currentFarenheight = fahrenheit;
-//  Serial.print("  Temperature = ");
-//  Serial.print(celsius);
-//  Serial.print(" Celsius, ");
-//  Serial.print(fahrenheit);
-//  Serial.println(" Fahrenheit");
-//}
 
 bool hasDevice( int address ) {
 
@@ -1417,7 +1018,6 @@ void setup() {
 
   Serial.println("System ready.");
   recordValue( "system", "status", "ready", _hostname );
-
 }
 
 void configureHostname() {
@@ -1430,7 +1030,6 @@ void configureHostname() {
 
   for (int i = 0; i < chip_id.length(); i++)
     c[i] = chip_id.charAt(i);
-
 
   //generate the MD5 hash for our string
   unsigned char* hash = MD5::make_hash( c );
@@ -1449,7 +1048,6 @@ void configureHostname() {
   //char hostname [12+1];
   //_hostname = "ESP_" + chip_id;
 
-
   if ( chip_id == "13904180" ) {
     _hostname = "soil";
     _soilSensorEnabled = true;
@@ -1457,7 +1055,6 @@ void configureHostname() {
   } else if ( chip_id == "16044072" ) {
     _hostname = "hippo";
     _soilSensorEnabled = false;
-
 
   } else if ( chip_id == "13891932" ) {
     _hostname = "aqua";
@@ -1469,21 +1066,18 @@ void configureHostname() {
     _hostname = "tempo";
     _soilSensorEnabled = false;
 
-
   } else if ( chip_id == "16044873" ) {
     _hostname = "taco";
     _soilSensorEnabled = false;
-
-
 
   } else if ( chip_id == "1626288" ) {
     _hostname = "dino";
     _soilSensorEnabled = false;
 
     _bluetoothEnabled = false;
-
+    _enableTempProbes = true;
     // hack  to have bluetooth enabled
-    bluetoothAvailable = true;
+    //bluetoothAvailable = true;
 
   } else {
     _hostname = "ESP_" + chip_id;
@@ -1491,17 +1085,12 @@ void configureHostname() {
 
 }
 void MDNSConnect() {
-
-
-
   if (!MDNS.begin( _hostname.c_str() )) {
     while (1) {
       delay(1000);
     }
   }
-
   Serial.println("mDNS hostname: " + _hostname );
-
   MDNS.addService("http", "tcp", 80);
   MDNS.addService("rootgrid-node", "tcp", 80);
 }
@@ -1585,6 +1174,18 @@ void urlRequest( char host[], String url, int httpPort ) {
   Serial.println("closing connection");
 
 }
+
+
+#include <SPI.h>            // For SPI comm (needed for not getting compile error)
+//#include <Adafruit_GFX.h>   // Needs a little change in original Adafruit library (See README.txt file)
+#include <ESP_SSD1306.h>    // Modification of Adafruit_SSD1306 for ESP8266 compatibility
+
+//#define OLED_CS     15  // Pin 19, CS - Chip select
+//#define OLED_DC     2   // Pin 20 - DC digital signal
+#define OLED_RESET  12  // Pin 15 -RESET digital signal
+
+ESP_SSD1306 display(OLED_RESET);
+
 
 
 #include "leaflift_images.h"
@@ -1783,7 +1384,6 @@ void initDisplay()
     }
   }
 }
-
 
 bool buttonADown = false;
 int buttonAState = 0;
