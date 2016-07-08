@@ -113,10 +113,6 @@ void setupWiFi()
   connectWiFi();
 }
 
-
-
-
-
 bool promptVisible = false;
 int promptTimeout = 0;
 String promptTitle;
@@ -135,9 +131,6 @@ void TickCallback() {
   }
 }
 
-
-
-
 //const uint16_t aport = 8266;
 //WiFiServer TelnetServer(aport);
 //WiFiClient Telnet;
@@ -153,12 +146,9 @@ void TickCallback() {
 //}
 
 #include "leaflift_api.h"
-
 #include "leaflift_OTA.h"
 
 void __setupWiFi() {
-
-
   //  WiFi.softAP( "Wi-Fi_" + _hostname.c_str(), "secure" );
   WiFi.mode(WIFI_AP);
 
@@ -181,7 +171,6 @@ void __setupWiFi() {
 
   //connectWiFi();
 }
-
 
 void connectWiFi() {
 
@@ -212,25 +201,9 @@ void saveIP() {
 
 }
 
-
-
-void setupSoilSensor() {
-  pinMode(A0, INPUT); //set up analog pin 0 to be input
-  mcp.pinMode(3, OUTPUT);
-  mcp.digitalWrite(3, LOW);
-  //pinMode(10, OUTPUT);
-
-}
 int _lastLUXReading;
-int numSoilSamples = 5;
-int _soilMoistureReadings[5] = {0, 0, 0, 0, 0};
-int _soilMoistureReadingIndex = 0;
 
-int _lastSoilMoistureReading = 0;
-int _soilMoistureReading = 0;
-bool _soilSensorEnabled = false;
-bool _enableTempProbes = false;
-String _soilState = "?";
+
 
 Adafruit_BMP085 bmp;
 
@@ -392,150 +365,8 @@ void sendStatusJSON( String msg ) {
   server.send(200, "text/plain", getJSONStatus( msg ) );
 }
 
-void setupHTTPServer() {
-  Serial.println("Starting http server...");
 
-  server.on("/", []() {
-    server.send(200, "text/plain", getJSONStatus() );
-  });
-
-  server.on("/config.json", []() {
-    server.send(200, "application/json", getJSONStatus() );
-  });
-  server.on("/status.json", []() {
-    server.send(200, "application/json", getJSONStatus() );
-  });
-
-  server.on("/switches", []() {
-    server.send(200, "text/html", "<html><head><script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js\"></script><script src=\"http://gbsx.net/switches.js\"></script></head><body></body></html>");
-  });
-
-  server.on("/config.html", []() {
-    server.send(200, "text/html", "<html><head><script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js\"></script><script src=\"http://gbsx.net/nodeconfig.js\"></script></head><body></body></html>");
-  });
-
-  server.on("/provision", []() {
-    provisionDevice();
-  });
-
-  server.on("/nodeconfig/api_enabled/0", []() {
-    SEND_DATA_TO_API = false;
-    sendStatusJSON("API Sending OFF ");
-  });
-
-  server.on("/nodeconfig/api_enabled/1", []() {
-    SEND_DATA_TO_API = true;
-    sendStatusJSON("API Sending ON ");
-  });
-
-
-  server.on("/nodeconfig/bluetooth/0", []() {
-    bluetoothAvailable = false;
-    sendStatusJSON("Bluetooth OFF ");
-  });
-  server.on("/nodeconfig/bluetooth/1", []() {
-    bluetoothAvailable = true;
-    sendStatusJSON("Bluetooth ON ");
-  });
-
-  server.on("/nodeconfig/uptime_display/0", []() {
-    _uptime_display = false;
-    sendStatusJSON("uptime_display OFF ");
-  });
-  server.on("/nodeconfig/uptime_display/1", []() {
-    _uptime_display = true;
-    sendStatusJSON("uptime_display ON ");
-  });
-
-
-  server.on("/nodeconfig/ota/0", []() {
-    _enableOTAUpdate = false;
-    sendStatusJSON("OTA DISABLED");
-  });
-  server.on("/nodeconfig/ota/1", []() {
-
-    _enableOTAUpdate = true;
-    sendStatusJSON("OTA OENABLED");
-  });
-
-
-  server.on("/nodeconfig/temp_probes/0", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Temp Probes DISABLED");
-    _enableTempProbes = false;
-  });
-  server.on("/nodeconfig/temp_probes/1", []() {
-    _enableTempProbes = true;
-    sendStatusJSON( "Temp Probes Enabled" );
-  });
-
-  server.on("/nodeconfig/soil/0", []() {
-    _soilSensorEnabled = false;
-    sendStatusJSON( "soilsensor DISABLED");
-  });
-  server.on("/nodeconfig/soil/1", []() {
-    _soilSensorEnabled = true;
-    sendStatusJSON( "soilsensor ENABLED" );
-  });
-
-  server.on("/nodeconfig/ph_sensor/0", []() {
-    _phSensorEnabled = false;
-    sendStatusJSON( "pH sensor DISABLED");
-  });
-  server.on("/nodeconfig/ph_sensor/1", []() {
-    _phSensorEnabled = true;
-    sendStatusJSON( "pH sensor ENABLED" );
-  });
-
-
-  //TODO: handle hostname
-
-  server.on("/switch/0/0", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [0] 0 ");
-    mcp.digitalWrite( 0, HIGH );
-  });
-  server.on("/switch/0/1", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [0] 1 ");
-    mcp.digitalWrite( 0, LOW );
-  });
-
-  server.on("/switch/1/0", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [1] 0 ");
-    mcp.digitalWrite( 1, HIGH );
-  });
-  server.on("/switch/1/1", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [1] 1 ");
-    mcp.digitalWrite( 1, LOW );
-  });
-
-  server.on("/switch/2/0", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [2] 0 ");
-    mcp.digitalWrite( 2, HIGH );
-  });
-  server.on("/switch/2/1", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [2] 1 ");
-    mcp.digitalWrite( 2, LOW );
-  });
-
-  server.on("/switch/3/0", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [3] 0 ");
-    mcp.digitalWrite( 3, HIGH );
-  });
-  server.on("/switch/3/1", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [3] 1 ");
-    mcp.digitalWrite( 3, LOW );
-  });
-
-  server.begin();
-}
+#include "leaflift_server.h"
 
 
 String get_i2cString() {
@@ -986,22 +817,16 @@ void renderDisplay() {
   display.println( " I2C: " + String(  get_i2cString() ) );
 
   if (haveIOChip) {
-
     display.println( " I/O: MCP23017" );
     //renderIOInterface();
   }
-
   if( _enableTempProbes ){
     //display.println( "Temp: " + String( temp_c ) + "'C" );
-    display.println( "Temp: " + String( currentFarenheight ) + "'F" );
-    
+    display.println( "Temp: " + String( currentFarenheight ) + "'F" ); 
   }
   if( _phSensorEnabled ){
     display.println( "  pH: " + String(ph_value_double) + "" );
   }
-
-  
-  
   if ( _soilSensorEnabled ) {
     display.println( "Soil: " + String( _lastSoilMoistureReading ) + "" );
   }
@@ -1011,16 +836,12 @@ void renderDisplay() {
     //display.clearDisplay();
     display.drawBitmap(110, 0, bluetoothIcon, 16, 16, WHITE );
   }
-
   if (_enableOTAUpdate) {
-
     display.drawBitmap(96, 48, otaIcon, 32, 16, WHITE );
   }
-
   if ( hasDevice( 57 ) ) {
     display.println( " LUX: " + String( _lastLUXReading ) + "" );
   }
-
   if ( hasDevice( 119 ) ) {
     display.println( "Temp: " + String( _lastTempF ) + "'F" );
   }

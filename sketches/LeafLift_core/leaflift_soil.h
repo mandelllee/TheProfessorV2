@@ -1,4 +1,22 @@
 
+void setupSoilSensor() {
+  pinMode(A0, INPUT); //set up analog pin 0 to be input
+  mcp.pinMode(3, OUTPUT);
+  mcp.digitalWrite(3, LOW);
+  //pinMode(10, OUTPUT);
+
+}
+
+int numSoilSamples = 5;
+int _soilMoistureReadings[5] = {0, 0, 0, 0, 0};
+int _soilMoistureReadingIndex = 0;
+
+int _lastSoilMoistureReading = 0;
+int _soilMoistureReading = 0;
+bool _soilSensorEnabled = false;
+bool _enableTempProbes = false;
+String _soilState = "?";
+
 void readSoilSensor() {
 
   Serial.println("POWER ON SOIL SENSOR MCP[3]");

@@ -12,7 +12,7 @@ void firmwareProgress(unsigned int progress, unsigned int total) {
 void setupOTAUpdate() {
 
   // Port defaults to 8266
-  // ArduinoOTA.setPort(8266);
+  ArduinoOTA.setPort(8266);
 
   char hn[_hostname.length() + 1];
   memset(hn, 0, _hostname.length() + 1);
