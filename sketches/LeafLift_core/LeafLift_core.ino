@@ -16,7 +16,7 @@
 //  |__________________                                                                          |
 //  |___               |                                                                         |-----
 //  |__   |            |                                                                         |     |
-//   __|  | ESP8266    |   Node MCU v1.0                                                         | USB |
+//   __|  | ESP8266    |   Node MCU v1.10                                                         | USB |
 //  |__|  |            |                                                                         |     |
 //   __|__|            |                                                                         |     |
 //  |__________________|                                                                         |-----
@@ -42,9 +42,10 @@ OneWire  ds(oneWirePin);  //a 2.2K resistor is necessary for 3.3v on the signal 
 
 #include "Adafruit_MCP23017.h"
 
-//char API_HOST[] = "api-quadroponic.rhcloud.com";
-char API_HOST[] = "10.5.1.25";
-int API_PORT = 3000;
+char API_HOST[] = "api-quadroponic.rhcloud.com";
+int API_PORT = 80;
+//char API_HOST[] = "10.5.1.25";
+//int API_PORT = 3000;
 
 bool SEND_DATA_TO_API = true;
 int SEND_DATA_INTERVAL = 10000;
@@ -54,7 +55,7 @@ double ph_value_double = 0.00;
 
 String BOARD_ID = "";
 
-String VERSION = "bird";
+String VERSION = "0.7-dog";
 
 bool TEST_MODE = false;
 
