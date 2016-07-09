@@ -97,6 +97,8 @@ struct bootflags flags;
 ##API Status ##
 http://www.nordicsemi.com/eng/Products/Bluetooth-low-energy/nRF51822#Downloads
 
+## Openshift Overview ##
+* https://developers.openshift.com/managing-your-applications/
 
 
 ## Nordicware BLE ##
