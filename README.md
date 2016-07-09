@@ -101,11 +101,10 @@ http://www.nordicsemi.com/eng/Products/Bluetooth-low-energy/nRF51822#Downloads
 
 ## Nordicware BLE ##
 * http://www.waveshare.com/wiki/NRF51822_Eval_Kit
-
+* http://www.nordicsemi.com/eng/Products/Bluetooth-low-energy/nRF51822#Downloads
 
 ## Data Sheets ##
 
 [Provisioned Devices](https://docs.google.com/spreadsheets/d/1kAXJa40VPameiitzwAIrNPWsr5kDdviN59xv5x8yYJM/edit#gid=0)
 
 [Recorded Data](https://docs.google.com/spreadsheets/d/1Yr3d8pXQllWeyCImAO6XK0u_NgsKmbjGjc9SEn9wM3I/edit#gid=87589501)
-
