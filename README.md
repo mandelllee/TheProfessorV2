@@ -103,6 +103,7 @@ http://www.nordicsemi.com/eng/Products/Bluetooth-low-energy/nRF51822#Downloads
 * http://www.waveshare.com/wiki/NRF51822_Eval_Kit
 * http://www.nordicsemi.com/eng/Products/Bluetooth-low-energy/nRF51822#Downloads
 * http://infocenter.nordicsemi.com/pdf/nRF51822_PB_v2.5.pdf
+* https://github.com/rogerclarkmelbourne/nRF51822-Arduino
 
 ## Data Sheets ##
 
