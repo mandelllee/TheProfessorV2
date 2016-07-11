@@ -16,7 +16,7 @@
 //  |__________________                                                                          |
 //  |___               |                                                                         |-----
 //  |__   |            |                                                                         |     |
-//   __|  | ESP8266    |   Node MCU v1.10                                                         | USB |
+//   __|  | ESP8266    |   Node MCU v1.0                                                         | USB |
 //  |__|  |            |                                                                         |     |
 //   __|__|            |                                                                         |     |
 //  |__________________|                                                                         |-----
@@ -55,7 +55,7 @@ double ph_value_double = 0.00;
 
 String BOARD_ID = "";
 
-String VERSION = "0.7-dog";
+String VERSION = "0.7-cat";
 
 bool TEST_MODE = false;
 
@@ -148,6 +148,8 @@ void TickCallback() {
 
 #include "leaflift_api.h"
 #include "leaflift_OTA.h"
+#include "dht_sensor.h"
+
 
 void __setupWiFi() {
   //  WiFi.softAP( "Wi-Fi_" + _hostname.c_str(), "secure" );
@@ -225,13 +227,13 @@ void readBMP085Sensor() {
   Serial.print(bmp.readTemperature());
   Serial.println(" *C");
   _lastTempC = bmp.readTemperature();
-  
+
   int newVal = (_lastTempC * 1.8) + 32;
-  if( newVal != _lastTempF ){
+  if ( newVal != _lastTempF ) {
     _lastTempF = newVal;
-    recordValue( "environment", "temp_f", String(_lastTempF), _hostname );
+    recordValue( "environment", "bmp180_temp_f", String(_lastTempF), _hostname );
   }
-  
+
   Serial.print("Pressure = ");
   Serial.print(bmp.readPressure());
   Serial.println(" Pa");
@@ -405,9 +407,16 @@ String getJSONStatus( String msg )
   data += ", \"bluetooth\": \"" + String(bluetoothAvailable ? "1" : "0") + "\"";
   data += ", \"ota\": \"" + String(_enableOTAUpdate ? "1" : "0") + "\"";
 
+
+  data += ", \"dht_sensor\": \"" + String( _dhtSensorEnabled ? "1" : "0") + "\"";
+  if (_dhtSensorEnabled ) {
+      data += ", \"dht_temp_f\": \"" + String( dht_temp_f ) + "\"";
+      data += ", \"dht_humidity\": \"" + String( dht_humidity ) + "\"";
+  }
+
   if ( msg.length() > 0) data += ", \"msg\": \"" + msg + "\"";
-  if( _enableTempProbes ) data += ", \"temp_c\": \"" + String(temp_c) + "\"";
-  if( _phSensorEnabled ) data += ", \"ph\": \"" + String(ph_value_double) + "\"";
+  if ( _enableTempProbes ) data += ", \"temp_c\": \"" + String(temp_c) + "\"";
+  if ( _phSensorEnabled ) data += ", \"ph\": \"" + String(ph_value_double) + "\"";
   if ( _soilSensorEnabled ) data += ", \"soil\": { \"state\":\"" + _soilState + "\", \"moisture\":\"" + String(_soilMoistureReading) + "\" } ";
 
   data += " }";
@@ -418,14 +427,14 @@ String getJSONStatus( String msg )
 #include "leaflift_ph.h"
 
 
-void readTemperatureSensors(){
+void readTemperatureSensors() {
   byte i;
   byte present = 0;
   byte type_s;
   byte data[12];
   byte addr[8];
   float celsius, fahrenheit;
-  
+
   if ( !ds.search(addr)) {
     Serial.println("No more addresses.");
     Serial.println();
@@ -433,19 +442,19 @@ void readTemperatureSensors(){
     delay(250);
     return;
   }
-  
+
   Serial.print("ROM =");
-  for( i = 0; i < 8; i++) {
+  for ( i = 0; i < 8; i++) {
     Serial.write(' ');
     Serial.print(addr[i], HEX);
   }
 
   if (OneWire::crc8(addr, 7) != addr[7]) {
-      Serial.println("CRC is not valid!");
-      return;
+    Serial.println("CRC is not valid!");
+    return;
   }
   Serial.println();
- 
+
   // the first ROM byte indicates which chip
   switch (addr[0]) {
     case 0x10:
@@ -463,17 +472,17 @@ void readTemperatureSensors(){
     default:
       Serial.println("Device is not a DS18x20 family device.");
       return;
-  } 
+  }
 
   ds.reset();
   ds.select(addr);
   ds.write(0x44, 1);        // start conversion, with parasite power on at the end
-  
+
   delay(1000);     // maybe 750ms is enough, maybe not
   // we might do a ds.depower() here, but the reset will take care of it.
-  
+
   present = ds.reset();
-  ds.select(addr);    
+  ds.select(addr);
   ds.write(0xBE);         // Read Scratchpad
 
   Serial.print("  Data = ");
@@ -598,7 +607,7 @@ void SensorCallback() {
   n++;
   if (n > 255) n = 0;
 
-  if( _enableTempProbes ) readTemperatureSensors();
+  if ( _enableTempProbes ) readTemperatureSensors();
   if (_soilSensorEnabled) readSoilSensor();
 
   if ( hasDevice( ph_sensor_address ) ) {
@@ -607,9 +616,15 @@ void SensorCallback() {
   if ( hasDevice( 57 ) ) {
     readLUXSensor();
   }
+  
   if ( hasDevice( 119 ) ) {
     readBMP085Sensor();
   }
+
+  if (_dhtSensorEnabled ) {
+    readDHTSensor();
+  }
+
 }
 
 
@@ -674,6 +689,10 @@ void setup() {
 
   if ( _bluetoothEnabled ) setupBluetooth();
 
+  if (_dhtSensorEnabled ) {
+    setupDHT();
+  }
+  
   setupHTTPServer();
   MDNSConnect();
 
@@ -724,7 +743,15 @@ void configureHostname() {
     _soilSensorEnabled = false;
     _phSensorEnabled = true;
     _enableTempProbes = true;
-    
+
+
+  } else if ( chip_id == "1770948" ) {
+    _hostname = "piru";
+    _soilSensorEnabled = true;
+    _phSensorEnabled = true;
+    _enableTempProbes = true;
+    _dhtSensorEnabled = true;
+
   } else if ( chip_id == "13916356" ) {
     _hostname = "tempo";
     _soilSensorEnabled = false;
@@ -812,7 +839,7 @@ void renderDisplay() {
   String minutes = (m < 10 ? "0" : "") + String( m );
   String seconds = (s < 10 ? "0" : "") + String( s );
   uptime_string = hours + ":" + minutes + ":" + seconds;
-  
+
   if ( _uptime_display ) display.println( "  UP: " + uptime_string );
 
   display.println( " I2C: " + String(  get_i2cString() ) );
@@ -821,11 +848,11 @@ void renderDisplay() {
     display.println( " I/O: MCP23017" );
     //renderIOInterface();
   }
-  if( _enableTempProbes ){
+  if ( _enableTempProbes ) {
     //display.println( "Temp: " + String( temp_c ) + "'C" );
-    display.println( "Temp: " + String( currentFarenheight ) + "'F" ); 
+    display.println( "Temp: " + String( currentFarenheight ) + "'F" );
   }
-  if( _phSensorEnabled ){
+  if ( _phSensorEnabled ) {
     display.println( "  pH: " + String(ph_value_double) + "" );
   }
   if ( _soilSensorEnabled ) {
@@ -1035,13 +1062,13 @@ void readLUXSensor() {
   if (event.light)
   {
     Serial.print(event.light); Serial.println(" lux");
-    
+
     int newVal = event.light;
-  if( _lastLUXReading != newVal ){
-    _lastLUXReading = newVal;
-    recordValue( "environment", "lux", String(_lastLUXReading), _hostname );
-  }
-  
+    if ( _lastLUXReading != newVal ) {
+      _lastLUXReading = newVal;
+      recordValue( "environment", "lux", String(_lastLUXReading), _hostname );
+    }
+
   }
   else
   {

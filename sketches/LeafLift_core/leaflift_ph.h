@@ -80,7 +80,7 @@ void readPhSensor() {
     updateDisplay();
 
     recordValue( "water", "ph", String(ph_value_double), _hostname );
-    recordValue( "water", "temp_f", String(currentFarenheight), _hostname );
+    recordValue( "water", "probe_temp_f", String(currentFarenheight), _hostname );
     
     //recordPh( ph_value_double );
   }

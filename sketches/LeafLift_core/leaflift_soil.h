@@ -78,4 +78,7 @@ void readSoilSensor() {
   Serial.println("POWER OFF SOIL SENSOR MCP[3]");
   //digitalWrite( 10, LOW );
   mcp.digitalWrite(3, LOW);
+
+  recordValue( "environment", "soil", String(_soilMoistureReading), _hostname );
+
 }
