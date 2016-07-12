@@ -1,8 +1,9 @@
+#define OUTPUTPIN 2 
 
 void setupSoilSensor() {
   pinMode(A0, INPUT); //set up analog pin 0 to be input
-  mcp.pinMode(3, OUTPUT);
-  mcp.digitalWrite(3, LOW);
+  mcp.pinMode(OUTPUTPIN, OUTPUT);
+  mcp.digitalWrite(OUTPUTPIN, LOW);
   //pinMode(10, OUTPUT);
 
 }
@@ -21,7 +22,7 @@ void readSoilSensor() {
 
   Serial.println("POWER ON SOIL SENSOR MCP[3]");
   //digitalWrite( 10, HIGH );
-  mcp.digitalWrite(3, HIGH);
+  mcp.digitalWrite(OUTPUTPIN, HIGH);
 
   Serial.println("WAIT 2 SECONDS....");
   //TODO: make this use a task instead of a delay
@@ -77,7 +78,7 @@ void readSoilSensor() {
 
   Serial.println("POWER OFF SOIL SENSOR MCP[3]");
   //digitalWrite( 10, LOW );
-  mcp.digitalWrite(3, LOW);
+  mcp.digitalWrite(OUTPUTPIN, LOW);
 
   recordValue( "environment", "soil", String(_soilMoistureReading), _hostname );
 

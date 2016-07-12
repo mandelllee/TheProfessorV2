@@ -95,8 +95,8 @@ Adafruit_MCP23017 mcp;
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 
-const char* ssid     = "Betsy's wifi";
-const char* password = "ninjaturtle";
+const char* ssid     = "gbsx";
+const char* password = "OrlandoNakazawa!";
 String ipAddressString = "";
 ESP8266WebServer server(80);
 
@@ -752,6 +752,8 @@ void configureHostname() {
     _enableTempProbes = true;
     _dhtSensorEnabled = true;
 
+<<<<<<< HEAD
+=======
   } else if ( chip_id == "13916356" ) {
     _hostname = "tempo";
     _soilSensorEnabled = false;
@@ -760,6 +762,7 @@ void configureHostname() {
     _hostname = "taco";
     _soilSensorEnabled = false;
 
+>>>>>>> pat
   } else if ( chip_id == "1626288" ) {
     _hostname = "dino";
     _soilSensorEnabled = false;
@@ -791,11 +794,60 @@ void updateSwitchStatus( String switch_number, bool state ) {
   //urlRequest( "10.5.1.105", "/switch/"+switch_number+"/" + (state?"on":"off") );
   //urlRequest( "10.5.1.105", "/switch/"+switch_number+"/toggle" );
 }
+<<<<<<< HEAD
+void provisionDevice(){
+
+  char host[] = "10.5.1.25";
+  //char host[] = "api-quadroponic.rhcloud.com";
+  int port = 3000;
+  
+  String url = "/v1/provision?type=node";
+
+  url += "&nodeid=" + BOARD_ID;
+  url += "&platform=arduino";
+  url += "&hardware=ESP8266";
+  url += "&boardid=" + chip_id;
+=======
+>>>>>>> pat
 
 
+<<<<<<< HEAD
+  Serial.println( String(host ) + "" + url );
+
+  urlRequest( host, url, port );
+}
+
+void recordValue(  String ty, String propertyname, String value, String id_value ) {
+
+  //char host[] = "10.5.1.25";
+  char host[] = "api-quadroponic.rhcloud.com";
+  
+  String url = "/v1/record?type=" + String(ty) + "&propertyname=" + String(propertyname)  + "&value=" + String(value) + "&id=" + String(id_value) + "&boardid=" + BOARD_ID
+               + "&core_version=" + VERSION;
+url +=  + "&boardname=" + _hostname;
+
+  Serial.println( String(host ) + "" + url );
+
+  urlRequest( host, url, 80 );
+
+}br
+
+void urlRequest( char host[], String url, int httpPort ) {
+
+  //String url = "/garden/garden.php?uid=" + _userid + "&action=ph&value=" + String(input) + "&tempc=" + String(temp_c) + "&vcc=" + String(voltValue) + "";
+  //char host[] = "gbsx.net";
+
+  // Use WiFiClient class to create TCP connections
+  WiFiClient client;
+  if (!client.connect(host, httpPort)) {
+    Serial.println("connection failed");
+    return;
+  }
+=======
 #include <SPI.h>            // For SPI comm (needed for not getting compile error)
 //#include <Adafruit_GFX.h>   // Needs a little change in original Adafruit library (See README.txt file)
 #include <ESP_SSD1306.h>    // Modification of Adafruit_SSD1306 for ESP8266 compatibility
+>>>>>>> pat
 
 //#define OLED_CS     15  // Pin 19, CS - Chip select
 //#define OLED_DC     2   // Pin 20 - DC digital signal
