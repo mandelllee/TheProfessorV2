@@ -1,15 +1,15 @@
 
 #include "DHT.h"
 
-bool _dhtSensorEnabled = true;
+bool _dhtSensorEnabled = false;
 
-#define DHTPIN 10 
+#define DHTPIN 2
 #define DHTTYPE DHT11   // DHT 11
 
 DHT dht(DHTPIN, DHTTYPE);
 
 float dht_temp_f;
-float dht_humidity; 
+float dht_humidity;
 //TODO: is double precise enough?
 
 void setupDHT() {
@@ -17,39 +17,50 @@ void setupDHT() {
 }
 
 void readDHTSensor() {
-  
+
+  displayTextOnDisplay( "Reading DHT11 sensor...");
+
   // Reading temperature or humidity takes about 250 milliseconds!
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
   float h = dht.readHumidity();
   // Read temperature as Fahrenheit (isFahrenheit = true)
   float f = dht.readTemperature(true);
 
-  delay( 450 );
-  
-  dht_temp_f = f;
-  dht_humidity = h;
+  //delay( 2000 );
 
-  recordValue( "environemnt", "dht_temp_f", String( dht_temp_f ), _hostname );
-  recordValue( "environemnt", "dht_humidity", String( dht_humidity ), _hostname );
-  
+
+
   // Check if any reads failed and exit early (to try again).
   if (isnan(h) || isnan(f)) {
     Serial.println("Failed to read from DHT sensor!");
+    displayTextOnDisplay( "Failed to read from DHT sensor!");
+    delay(1000);
     return;
+  } else {
+
+    if ( h != dht_humidity ) {
+      dht_humidity = h;
+      recordValue( "environemnt", "dht_humidity", String( dht_humidity ), _hostname );
+    }
+
+    if ( h != dht_humidity ) {
+      dht_temp_f = f;
+      recordValue( "environemnt", "dht_temp_f", String( dht_temp_f ), _hostname );
+    }
   }
 
   // Compute heat index in Fahrenheit (the default)
-  float hif = dht.computeHeatIndex(f, h);
-
-  Serial.print("{ \"humidity\": \"");
-  Serial.print(h);
-  Serial.print("%\"");
-  Serial.print(",\"temperature\": \"");
-  Serial.print(f);
-  Serial.print("*F\",\"");
-  Serial.print(",\"heat_index\": \"");
-  Serial.print(hif);
-  Serial.println("*F\"}");
+  //  float hif = dht.computeHeatIndex(f, h);
+  //
+  //  Serial.print("{ \"humidity\": \"");
+  //  Serial.print(h);
+  //  Serial.print("%\"");
+  //  Serial.print(",\"temperature\": \"");
+  //  Serial.print(f);
+  //  Serial.print("*F\",\"");
+  //  Serial.print(",\"heat_index\": \"");
+  //  Serial.print(hif);
+  //  Serial.println("*F\"}");
 }
 
 

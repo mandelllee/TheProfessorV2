@@ -13,6 +13,12 @@ void setupHTTPServer() {
     server.send(200, "application/json", getJSONStatus() );
   });
 
+  server.on("/sensors.json", []() {
+    server.send(200, "application/json", getJSONData("") );
+  });
+
+  
+
   server.on("/switches", []() {
     server.send(200, "text/html", "<html><head><script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js\"></script><script src=\"http://gbsx.net/switches.js\"></script></head><body></body></html>");
   });
@@ -52,6 +58,15 @@ void setupHTTPServer() {
   server.on("/nodeconfig/uptime_display/1", []() {
     _uptime_display = true;
     sendStatusJSON("uptime_display ON ");
+  });
+
+  server.on("/nodeconfig/dht_sensor/0", []() {
+    _dhtSensorEnabled = false;
+    sendStatusJSON("dht_sensor OFF ");
+  });
+  server.on("/nodeconfig/dht_sensor/1", []() {
+    _dhtSensorEnabled = true;
+    sendStatusJSON("dht_sensor ON ");
   });
 
 

@@ -8,7 +8,7 @@
 //     Arduino-Core
 //
 //          I2C    I2C   1WIRE
-//          SDA    SCL   Temp                                 Rx2   Tx2   Rx0   Tx0
+//          SDA    SCL   Temp   DHT                           Rx2   Tx2   Rx0   Tx0
 //    16  : 5    : 4   : 0    : 2   : 3v  : GND : 14  : 12  : 13  : 15  : 3   : 1   : GND : 3v  :
 //  |--------------------------------------------------------------------------------------------|
 //  |                                                                                            |
@@ -50,12 +50,14 @@ int API_PORT = 80;
 bool SEND_DATA_TO_API = true;
 int SEND_DATA_INTERVAL = 10000;
 
+bool _soilSensorEnabled = false;
+
 double temp_c = 0.00;
 double ph_value_double = 0.00;
 
 String BOARD_ID = "";
 
-String VERSION = "0.7-cat";
+String VERSION = "0.0-skye";
 
 bool TEST_MODE = false;
 
@@ -74,6 +76,7 @@ bool _enableOTAUpdate = true;
 bool _phSensorEnabled = false;
 bool _uptime_display = true;
 String uptime_string = "";
+
 
 
 #define _TASK_SLEEP_ON_IDLE_RUN
@@ -391,35 +394,71 @@ String getJSONStatus( ) {
 String getJSONStatus( String msg )
 {
   String i2c_string = get_i2cString();
+  String data = "{\n  \"board_id\":\"" + BOARD_ID + "\",\n  \"chip_id\":\"" + chip_id + "\",\n  \"uptime\":\"" + uptime_string + "\",\n  \"core_version\":\"" + VERSION + "\",\n  \"ip\":\"" + ipAddressString + "\",\n  \"hostname\":\"" + _hostname + "\",\n  \"i2c\":[" + i2c_string + "]";
+
+  data += ",\n  \"api_enabled\": \"" + String(SEND_DATA_TO_API ? "1" : "0") + "\"";
+  data += ",\n  \"api_interval\": \"" + String(SEND_DATA_INTERVAL) + "\"";
+  data += ",\n  \"api_host\": \"" + String(API_HOST) + "\"";
+  data += ",\n  \"ph_sensor\": \"" + String(_phSensorEnabled ? "1" : "0") + "\"";
+  data += ",\n  \"temp_probes\": \"" + String(_enableTempProbes ? "1" : "0") + "\"";
+  data += ",\n  \"uptime_display\": \"" + String(_uptime_display ? "1" : "0") + "\"";
+  data += ",\n  \"bluetooth\": \"" + String(bluetoothAvailable ? "1" : "0") + "\"";
+  data += ",\n  \"ota\": \"" + String(_enableOTAUpdate ? "1" : "0") + "\"";
+  data += ",\n  \"dht_sensor\": \"" + String( _dhtSensorEnabled ? "1" : "0") + "\"";
+  data += ",\n  \"soil\": \"" + String( _soilSensorEnabled ? "1" : "0") + "\"";
+  data += ",\n  \"soil_sensor\": \"" + String( _soilSensorEnabled ? "1" : "0") + "\"";
+
+  if ( msg.length() > 0) data += ",\n  \"msg\": \"" + msg + "\"";
+  data += "\n}";
+  return data;
+}
 
 
-  String data =  "{\"board_id\":\"" + BOARD_ID + "\", \"chip_id\":\"" + chip_id + "\",\"uptime\":\"" + uptime_string + "\", \"core_version\":\"" + VERSION + "\", \"ip\":\"" + ipAddressString + "\", \"hostname\":\"" + _hostname + "\", \"i2c\":[" + i2c_string + "]";
+String getJSONData( String msg )
+{
+  String i2c_string = get_i2cString();
 
-  data += ", \"api_enabled\": \"" + String(SEND_DATA_TO_API ? "1" : "0") + "\"";
-  data += ", \"api_interval\": \"" + String(SEND_DATA_INTERVAL) + "\"";
-  data += ", \"api_host\": \"" + String(API_HOST) + "\"";
+  String data =  "{\n";
 
+  data += "  \"hostname\":\"" + _hostname + "\"";
+  data += ",\n  \"core_version\":\"" + VERSION + "\"";
+  if ( msg.length() > 0) data += ",\n  \"msg\": \"" + msg + "\"";
+  data += ",\n";
 
-  data += ", \"ph_sensor\": \"" + String(_phSensorEnabled ? "1" : "0") + "\"";
-  data += ", \"temp_probes\": \"" + String(_enableTempProbes ? "1" : "0") + "\"";
+  data += "  \"sensors\": {";
+  //  data += "\n    \"uid\": \"000000\"";
+  data += "\n    \"time\": \"000000\"";
 
-  data += ", \"uptime_display\": \"" + String(_uptime_display ? "1" : "0") + "\"";
-  data += ", \"bluetooth\": \"" + String(bluetoothAvailable ? "1" : "0") + "\"";
-  data += ", \"ota\": \"" + String(_enableOTAUpdate ? "1" : "0") + "\"";
+  if ( _phSensorEnabled ) data += ",\n    \"ph\": \"" + String(ph_value_double) + "\"";
 
+  if ( _enableTempProbes ) {
+    data += ",\n    \"probes\": {";
 
-  data += ", \"dht_sensor\": \"" + String( _dhtSensorEnabled ? "1" : "0") + "\"";
-  if (_dhtSensorEnabled ) {
-      data += ", \"dht_temp_f\": \"" + String( dht_temp_f ) + "\"";
-      data += ", \"dht_humidity\": \"" + String( dht_humidity ) + "\"";
+    data += "\n      { \"temp_c\": \"" + String(temp_c) + "\" }";
+    //data += ",\n    \"temp_c\": \"" + String(temp_c) + "\"";
+
+    data += "\n    }";
   }
 
-  if ( msg.length() > 0) data += ", \"msg\": \"" + msg + "\"";
-  if ( _enableTempProbes ) data += ", \"temp_c\": \"" + String(temp_c) + "\"";
-  if ( _phSensorEnabled ) data += ", \"ph\": \"" + String(ph_value_double) + "\"";
-  if ( _soilSensorEnabled ) data += ", \"soil\": { \"state\":\"" + _soilState + "\", \"moisture\":\"" + String(_soilMoistureReading) + "\" } ";
-
-  data += " }";
+  if ( _dhtSensorEnabled ) {
+    data += ",\n    \"dht\": {";
+    data += "\n      \"dht_temp_f\": \"" + String( dht_temp_f ) + "\"";
+    data += ",\n      \"dht_humidity\": \"" + String( dht_humidity ) + "\"";
+    data += "\n    }";
+  }
+  if ( _soilSensorEnabled ) {
+    data += ",\n    \"soil\": { ";
+    data += "\n      \"1\":\"" + String( sensorReadings[0] ) + "\"";
+    data += ",\n      \"2\":\"" + String( sensorReadings[1] ) + "\"";
+    data += ",\n      \"3\":\"" + String( sensorReadings[2] ) + "\"";
+    data += ",\n      \"4\":\"" + String( sensorReadings[3] ) + "\"";
+    //data += "\"state\":\"" + _soilState + "\"";
+    //data += ", \"moisture\":\"" + String(_soilMoistureReading) + "\" ";
+    data += "\n    }";
+  }
+  data += "\n";
+  data += "   }\n";
+  data += " }\n";
   return data;
 
 }
@@ -575,6 +614,12 @@ void scanI2C() {
   //delay( 2000 );
 }
 
+
+bool haveIOChip = false;
+bool _bluetoothEnabled = false;
+
+#include "hostname_config.h"
+
 bool button1Down = false;
 bool button2Down = false;
 bool switch1 = false;
@@ -608,7 +653,7 @@ void SensorCallback() {
   if (n > 255) n = 0;
 
   if ( _enableTempProbes ) readTemperatureSensors();
-  if (_soilSensorEnabled) readSoilSensor();
+  if (_soilSensorEnabled) readSoilSensors();
 
   if ( hasDevice( ph_sensor_address ) ) {
     readPhSensor();
@@ -616,7 +661,7 @@ void SensorCallback() {
   if ( hasDevice( 57 ) ) {
     readLUXSensor();
   }
-  
+
   if ( hasDevice( 119 ) ) {
     readBMP085Sensor();
   }
@@ -635,8 +680,6 @@ bool hasDevice( int address ) {
   }
   return false;
 }
-bool haveIOChip = false;
-bool _bluetoothEnabled = false;
 void setup() {
 
   configureHostname();
@@ -683,7 +726,7 @@ void setup() {
     Serial.println("Barometric Pressure, Temp, Altitude");
     setupBMP085Sensor();
   }
-  if (_soilSensorEnabled) setupSoilSensor();
+  if (_soilSensorEnabled) setupSoilSensors();
 
   setupWiFi();
 
@@ -692,88 +735,15 @@ void setup() {
   if (_dhtSensorEnabled ) {
     setupDHT();
   }
-  
-  setupHTTPServer();
-  MDNSConnect();
 
+  setupHTTPServer(); Task
+  MDNSConnect();
   setupOTAUpdate();
 
   Serial.println("System ready.");
   recordValue( "system", "status", "ready", _hostname );
 }
 
-void configureHostname() {
-
-  chip_id = String( ESP.getChipId() );
-  //char c[] = chip_id.c_str();
-
-  char c[chip_id.length() + 1];
-  memset(c, 0, chip_id.length() + 1);
-
-  for (int i = 0; i < chip_id.length(); i++)
-    c[i] = chip_id.charAt(i);
-
-  //generate the MD5 hash for our string
-  unsigned char* hash = MD5::make_hash( c );
-
-  //generate the digest (hex encoding) of our hash
-  char *md5str = MD5::make_digest(hash, 16);
-  free(hash);
-  //print it on our serial monitor
-  //Serial.println(md5str);
-  //Give the Memory back to the System if you run the md5 Hash generation in a loop
-  BOARD_ID = md5str;
-
-  free(md5str);
-
-  //hostname = ESP.getChipId()
-  //char hostname [12+1];
-  //_hostname = "ESP_" + chip_id;
-
-  if ( chip_id == "13904180" ) {
-    _hostname = "soil";
-    _soilSensorEnabled = true;
-
-  } else if ( chip_id == "16044072" ) {
-    _hostname = "hippo";
-    _soilSensorEnabled = false;
-
-  } else if ( chip_id == "13891932" ) {
-    _hostname = "aqua";
-    _soilSensorEnabled = false;
-    _phSensorEnabled = true;
-    _enableTempProbes = true;
-
-
-  } else if ( chip_id == "1770948" ) {
-    _hostname = "piru";
-    _soilSensorEnabled = true;
-    _phSensorEnabled = true;
-    _enableTempProbes = true;
-    _dhtSensorEnabled = true;
-
-  } else if ( chip_id == "13916356" ) {
-    _hostname = "tempo";
-    _soilSensorEnabled = false;
-
-  } else if ( chip_id == "16044873" ) {
-    _hostname = "taco";
-    _soilSensorEnabled = false;
-
-  } else if ( chip_id == "1626288" ) {
-    _hostname = "dino";
-    _soilSensorEnabled = false;
-
-    _bluetoothEnabled = false;
-    _enableTempProbes = true;
-    // hack  to have bluetooth enabled
-    //bluetoothAvailable = true;
-
-  } else {
-    _hostname = "ESP_" + chip_id;
-  }
-
-}
 void MDNSConnect() {
   if (!MDNS.begin( _hostname.c_str() )) {
     while (1) {
@@ -827,7 +797,7 @@ void renderDisplay() {
   display.setTextSize(1);
   display.println( "CORE: " + String( VERSION ) );
   display.println( "HOST: " + String( _hostname ) );
-  display.println( "WiFi: " + String( ssid ) );
+  //display.println( "WiFi: " + String( ssid ) );
   display.println( "  IP: " + String( ipAddressString ) );
 
   int mt = (int)_tickCount / 60;
@@ -842,7 +812,7 @@ void renderDisplay() {
 
   if ( _uptime_display ) display.println( "  UP: " + uptime_string );
 
-  display.println( " I2C: " + String(  get_i2cString() ) );
+  //display.println( " I2C: " + String(  get_i2cString() ) );
 
   if (haveIOChip) {
     display.println( " I/O: MCP23017" );
@@ -858,6 +828,11 @@ void renderDisplay() {
   if ( _soilSensorEnabled ) {
     display.println( "Soil: " + String( _lastSoilMoistureReading ) + "" );
   }
+  if ( _dhtSensorEnabled ) {
+    display.println( "Humidity: " + String( dht_humidity ) + "%" );
+  }
+
+
   if (bluetoothAvailable) {
     //     display.setCursor(100, 0);
     //     display.println( "(>B)" );
