@@ -10,50 +10,67 @@ bool _enableTempProbes = false;
 String _soilState = "?";
 
 
-int sensorPin1 = 14;
-int sensorPin2 = 12;
-int sensorPin3 = 13;
-int sensorPin4 = 15;
+int soilSensorPin1 = 14;
+int soilSensorPin2 = 12;
+int soilSensorPin3 = 13;
+int soilSensorPin4 = 15;
+
+
+int relayPin1 = 4;
+int relayPin2 = 5;
+int relayPin3 = 6;
+int relayPin4 = 7;
+
 
 int sensorReadings[] = {0, 0, 0, 0};
 bool useIOForSoilSensor = false;
 
+int soilReadFrequency = 30 * 1000;
+
+
+
 void setupSoilSensors() {
 
-  useIOForSoilSensor = hasDevice( 32 );
+  //useIOForSoilSensor = hasDevice( 32 );
 
   if ( useIOForSoilSensor ) {
+    mcp.pinMode(soilSensorPin1, OUTPUT);
+    mcp.pinMode(soilSensorPin2, OUTPUT);
+    mcp.pinMode(soilSensorPin3, OUTPUT);
+    mcp.pinMode(soilSensorPin4, OUTPUT);
 
-    sensorPin1 = 3;
-    sensorPin2 = 2;
-    sensorPin3 = 0;
-    sensorPin4 = 1;
+    mcp.pinMode(relayPin1, OUTPUT);
+    mcp.pinMode(relayPin2, OUTPUT);
+    mcp.pinMode(relayPin3, OUTPUT);
+    mcp.pinMode(relayPin4, OUTPUT);
 
-    mcp.pinMode(sensorPin1, OUTPUT);
-    mcp.pinMode(sensorPin2, OUTPUT);
-    mcp.pinMode(sensorPin3, OUTPUT);
-    mcp.pinMode(sensorPin4, OUTPUT);
-    mcp.digitalWrite(sensorPin1, LOW);
-    mcp.digitalWrite(sensorPin2, LOW);
-    mcp.digitalWrite(sensorPin3, LOW);
-    mcp.digitalWrite(sensorPin4, LOW);
+    mcp.pinMode(relayPin1, HIGH);
+    mcp.pinMode(relayPin2, HIGH);
+    mcp.pinMode(relayPin3, HIGH);
+    mcp.pinMode(relayPin4, HIGH);
+    
+    mcp.digitalWrite(soilSensorPin1, LOW);
+    mcp.digitalWrite(soilSensorPin2, LOW);
+    mcp.digitalWrite(soilSensorPin3, LOW);
+    mcp.digitalWrite(soilSensorPin4, LOW);
 
   } else {
-    pinMode(sensorPin1, OUTPUT);
-    pinMode(sensorPin2, OUTPUT);
-    pinMode(sensorPin3, OUTPUT);
-    pinMode(sensorPin4, OUTPUT);
+    if( soilSensorPin1 != -1 ) pinMode(soilSensorPin1, OUTPUT);
+     if( soilSensorPin2 != -1 ) pinMode(soilSensorPin2, OUTPUT);
+     if( soilSensorPin3 != -1 ) pinMode(soilSensorPin3, OUTPUT);
+     if( soilSensorPin4 != -1 ) pinMode(soilSensorPin4, OUTPUT);
   }
   pinMode(A0, INPUT); //set up analog pin 0 to be input
 }
 
 
-
 void readSoilSensor( int pin, int index, String label  ) {
 
-
+  int relayPin = pin + 4;
+  
   //Serial.println("POWER ON SOIL SENSOR [" + String(pin) + "]");
   if ( useIOForSoilSensor ) {
+    mcp.digitalWrite(relayPin, LOW);    
     mcp.digitalWrite(pin, HIGH);
   } else {
     digitalWrite( pin, HIGH );
@@ -70,10 +87,10 @@ void readSoilSensor( int pin, int index, String label  ) {
   sensorReadings[index] = s;
   Serial.println(label + ": [" + String(s) + "] [pin: " + String(pin) + "] " );
 
-
   Serial.println("POWER OFF SOIL PIN[" + String(pin) + "]");
   if ( useIOForSoilSensor ) {
     mcp.digitalWrite(pin, LOW);
+    mcp.digitalWrite(relayPin, HIGH);
   } else {
     digitalWrite( pin, LOW );
   }
@@ -139,12 +156,19 @@ void readSoilSensors() {
 
   Serial.println("reading soil sensors...");
 
-  readSoilSensor( sensorPin1, 0, "1" );
-  readSoilSensor( sensorPin2, 1, "2" );
-  readSoilSensor( sensorPin3, 2, "3" );
-  readSoilSensor( sensorPin4, 3, "4" );
+  if( soilSensorPin1 != -1 ) readSoilSensor( soilSensorPin1, 0, "1" );
+  if( soilSensorPin2 != -1 ) readSoilSensor( soilSensorPin2, 1, "2" );
+  if( soilSensorPin3 != -1 ) readSoilSensor( soilSensorPin3, 2, "3" );
+  if( soilSensorPin4 != -1 ) readSoilSensor( soilSensorPin4, 3, "4" );
 
 }
+
+
+
+//if(_soilSensorEnabled) {
+
+  Task soilSensorInterval( soilReadFrequency, TASK_FOREVER, &readSoilSensors, &sensorScheduler, true);
+//}
 //void setup() {
 //
 //  Serial.begin( 115200 );

@@ -55,19 +55,25 @@ void configureHostname() {
 
   } else if ( chip_id == "14558901" ) {
     _hostname = "pepper";
+    useIOForSoilSensor = true;
     _soilSensorEnabled = true;
+
+    soilSensorPin1 = 3;
+    soilSensorPin2 = 2;
+    soilSensorPin3 = 0;
+    soilSensorPin4 = 1;
     _phSensorEnabled = false;
     _enableTempProbes = false;
     _dhtSensorEnabled = false;
 
-  
-  
-//  } else if ( chip_id == "1658862" ) {
-//    _hostname = "bean";
-//    _soilSensorEnabled = 88;
-//    _phSensorEnabled = false;
-//    _enableTempProbes = false;
-//    _dhtSensorEnabled = true;
+
+
+    //  } else if ( chip_id == "1658862" ) {
+    //    _hostname = "bean";
+    //    _soilSensorEnabled = 88;
+    //    _phSensorEnabled = false;
+    //    _enableTempProbes = false;
+    //    _dhtSensorEnabled = true;
 
   } else if ( chip_id == "1770948" ) {
     _hostname = "piru";
@@ -80,10 +86,13 @@ void configureHostname() {
     _hostname = "tempo";
     _soilSensorEnabled = false;
     _dhtSensorEnabled = true;
-    
+
   } else if ( chip_id == "16044873" ) {
     _hostname = "taco";
-    _soilSensorEnabled = false;
+    _soilSensorEnabled = true;
+    _phSensorEnabled = false;
+    _enableTempProbes = true;
+    _dhtSensorEnabled = false;
 
   } else if ( chip_id == "1626288" ) {
     _hostname = "dino";

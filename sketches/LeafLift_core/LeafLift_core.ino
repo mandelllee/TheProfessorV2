@@ -34,9 +34,18 @@
 #include <Adafruit_BMP085.h>
 #include <OneWire.h>
 
+#define _TASK_SLEEP_ON_IDLE_RUN
+#define _TASK_STATUS_REQUEST
+#include <TaskScheduler.h>
+
+
+
 int oneWirePin = 0;
 OneWire  ds(oneWirePin);  //a 2.2K resistor is necessary for 3.3v on the signal line, 4.7k for 5v
 
+
+Scheduler ts;
+Scheduler sensorScheduler;
 
 #include "leaflift_crypto.h"
 
@@ -78,10 +87,6 @@ bool _uptime_display = true;
 String uptime_string = "";
 
 
-
-#define _TASK_SLEEP_ON_IDLE_RUN
-#define _TASK_STATUS_REQUEST
-#include <TaskScheduler.h>
 
 #include <SoftwareSerial.h>
 SoftwareSerial BT(14, 12);
@@ -632,9 +637,6 @@ bool switch4 = false;
 
 int n = 0;
 
-Scheduler ts;
-Scheduler sensorScheduler;
-
 // Callback methods prototypes
 void CycleCallback();
 Task tCycle( 1000, TASK_FOREVER, &CycleCallback, &ts, true);
@@ -653,8 +655,7 @@ void SensorCallback() {
   if (n > 255) n = 0;
 
   if ( _enableTempProbes ) readTemperatureSensors();
-  if (_soilSensorEnabled) readSoilSensors();
-
+  
   if ( hasDevice( ph_sensor_address ) ) {
     readPhSensor();
   }
