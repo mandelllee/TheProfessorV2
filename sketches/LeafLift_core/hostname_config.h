@@ -57,7 +57,20 @@ void configureHostname() {
     _hostname = "pepper";
     useIOForSoilSensor = true;
     _soilSensorEnabled = true;
-
+    _soilConfigJSON = ",\n      \"calibration\": { \n";
+    _soilConfigJSON+= "        \"dry\": { \n";
+    _soilConfigJSON+= "          \"1\":\"909\",\n";
+    _soilConfigJSON+= "          \"2\":\"911\",\n";
+    _soilConfigJSON+= "          \"3\":\"868\",\n";
+    _soilConfigJSON+= "          \"4\":\"903\"\n";
+    _soilConfigJSON+= "         },\n";
+    _soilConfigJSON+= "        \"wet\": { \n";
+    _soilConfigJSON+= "          \"1\":\"294\",\n";
+    _soilConfigJSON+= "          \"2\":\"283\",\n";
+    _soilConfigJSON+= "          \"3\":\"239\",\n";
+    _soilConfigJSON+= "          \"4\":\"21\"\n";
+    _soilConfigJSON+= "        }\n";
+    _soilConfigJSON+= "      }\n";
     soilSensorPin1 = 3;
     soilSensorPin2 = 2;
     soilSensorPin3 = 0;

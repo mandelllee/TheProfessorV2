@@ -1,4 +1,5 @@
 
+String _soilConfigJSON = "";
 
 int numSoilSamples = 5;
 int _soilMoistureReadings[5] = {0, 0, 0, 0, 0};
@@ -48,17 +49,17 @@ void setupSoilSensors() {
     mcp.pinMode(relayPin2, HIGH);
     mcp.pinMode(relayPin3, HIGH);
     mcp.pinMode(relayPin4, HIGH);
-    
+
     mcp.digitalWrite(soilSensorPin1, LOW);
     mcp.digitalWrite(soilSensorPin2, LOW);
     mcp.digitalWrite(soilSensorPin3, LOW);
     mcp.digitalWrite(soilSensorPin4, LOW);
 
   } else {
-    if( soilSensorPin1 != -1 ) pinMode(soilSensorPin1, OUTPUT);
-     if( soilSensorPin2 != -1 ) pinMode(soilSensorPin2, OUTPUT);
-     if( soilSensorPin3 != -1 ) pinMode(soilSensorPin3, OUTPUT);
-     if( soilSensorPin4 != -1 ) pinMode(soilSensorPin4, OUTPUT);
+    if ( soilSensorPin1 != -1 ) pinMode(soilSensorPin1, OUTPUT);
+    if ( soilSensorPin2 != -1 ) pinMode(soilSensorPin2, OUTPUT);
+    if ( soilSensorPin3 != -1 ) pinMode(soilSensorPin3, OUTPUT);
+    if ( soilSensorPin4 != -1 ) pinMode(soilSensorPin4, OUTPUT);
   }
   pinMode(A0, INPUT); //set up analog pin 0 to be input
 }
@@ -67,10 +68,10 @@ void setupSoilSensors() {
 void readSoilSensor( int pin, int index, String label  ) {
 
   int relayPin = pin + 4;
-  
+
   //Serial.println("POWER ON SOIL SENSOR [" + String(pin) + "]");
   if ( useIOForSoilSensor ) {
-    mcp.digitalWrite(relayPin, LOW);    
+    mcp.digitalWrite(relayPin, LOW);
     mcp.digitalWrite(pin, HIGH);
   } else {
     digitalWrite( pin, HIGH );
@@ -156,10 +157,10 @@ void readSoilSensors() {
 
   Serial.println("reading soil sensors...");
 
-  if( soilSensorPin1 != -1 ) readSoilSensor( soilSensorPin1, 0, "1" );
-  if( soilSensorPin2 != -1 ) readSoilSensor( soilSensorPin2, 1, "2" );
-  if( soilSensorPin3 != -1 ) readSoilSensor( soilSensorPin3, 2, "3" );
-  if( soilSensorPin4 != -1 ) readSoilSensor( soilSensorPin4, 3, "4" );
+  if ( soilSensorPin1 != -1 ) readSoilSensor( soilSensorPin1, 0, "1" );
+  if ( soilSensorPin2 != -1 ) readSoilSensor( soilSensorPin2, 1, "2" );
+  if ( soilSensorPin3 != -1 ) readSoilSensor( soilSensorPin3, 2, "3" );
+  if ( soilSensorPin4 != -1 ) readSoilSensor( soilSensorPin4, 3, "4" );
 
 }
 
@@ -167,7 +168,7 @@ void readSoilSensors() {
 
 //if(_soilSensorEnabled) {
 
-  Task soilSensorInterval( soilReadFrequency, TASK_FOREVER, &readSoilSensors, &sensorScheduler, true);
+Task soilSensorInterval( soilReadFrequency, TASK_FOREVER, &readSoilSensors, &sensorScheduler, true);
 //}
 //void setup() {
 //

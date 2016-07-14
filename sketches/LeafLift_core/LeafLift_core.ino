@@ -453,17 +453,24 @@ String getJSONData( String msg )
   }
   if ( _soilSensorEnabled ) {
     data += ",\n    \"soil\": { ";
-    data += "\n      \"1\":\"" + String( sensorReadings[0] ) + "\"";
-    data += ",\n      \"2\":\"" + String( sensorReadings[1] ) + "\"";
-    data += ",\n      \"3\":\"" + String( sensorReadings[2] ) + "\"";
-    data += ",\n      \"4\":\"" + String( sensorReadings[3] ) + "\"";
+    data += "\n      \"sensors\": { ";
+    data += "\n         \"1\":\"" + String( sensorReadings[0] ) + "\"";
+    data += ",\n         \"2\":\"" + String( sensorReadings[1] ) + "\"";
+    data += ",\n         \"3\":\"" + String( sensorReadings[2] ) + "\"";
+    data += ",\n         \"4\":\"" + String( sensorReadings[3] ) + "\"";
+    data += "\n      }";
+ 
+    data+= _soilConfigJSON;
+   
     //data += "\"state\":\"" + _soilState + "\"";
     //data += ", \"moisture\":\"" + String(_soilMoistureReading) + "\" ";
     data += "\n    }";
+
+    
   }
   data += "\n";
   data += "   }\n";
-  data += " }\n";
+  data += "}\n";
   return data;
 
 }
