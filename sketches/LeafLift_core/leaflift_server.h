@@ -6,6 +6,12 @@ void setupHTTPServer() {
     server.send(200, "text/plain", getJSONStatus() );
   });
 
+  server.on("/synctime", []() {
+    getTime();
+    
+    server.send(200, "text/plain", String( _now ) );
+  });
+  
   server.on("/config.json", []() {
     server.send(200, "application/json", getJSONStatus() );
   });
