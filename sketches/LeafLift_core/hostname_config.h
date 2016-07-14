@@ -50,14 +50,20 @@ void configureHostname() {
     _hostname = "potato";
     _soilSensorEnabled = false;
     _phSensorEnabled = false;
-    _enableTempProbes = false;
-    _dhtSensorEnabled = true;
+    _enableTempProbes = true;
+    _dhtSensorEnabled = false;
 
   } else if ( chip_id == "14558901" ) {
     _hostname = "pepper";
     useIOForSoilSensor = true;
     _soilSensorEnabled = true;
     _soilConfigJSON = ",\n      \"calibration\": { \n";
+    _soilConfigJSON+= "        \"label\": { \n";
+    _soilConfigJSON+= "          \"1\":\"Green\",\n";
+    _soilConfigJSON+= "          \"2\":\"Dome\",\n";
+    _soilConfigJSON+= "          \"3\":\"Bunny\",\n";
+    _soilConfigJSON+= "          \"4\":\"Other\"\n";
+    _soilConfigJSON+= "         },\n";
     _soilConfigJSON+= "        \"dry\": { \n";
     _soilConfigJSON+= "          \"1\":\"909\",\n";
     _soilConfigJSON+= "          \"2\":\"911\",\n";
@@ -99,7 +105,9 @@ void configureHostname() {
     _hostname = "tempo";
     _soilSensorEnabled = false;
     _dhtSensorEnabled = true;
-
+    _luxSensorEnabled = true;
+    _BMP085Enabled = true;
+  
   } else if ( chip_id == "16044873" ) {
     _hostname = "taco";
     _soilSensorEnabled = true;

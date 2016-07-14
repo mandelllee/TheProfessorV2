@@ -1,6 +1,6 @@
 
 
-void urlRequest( char host[], String url, int httpPort ) {
+String urlRequest( char host[], String url, int httpPort ) {
 
   //String url = "/garden/garden.php?uid=" + _userid + "&action=ph&value=" + String(input) + "&tempc=" + String(temp_c) + "&vcc=" + String(voltValue) + "";
   //char host[] = "gbsx.net";
@@ -9,12 +9,12 @@ void urlRequest( char host[], String url, int httpPort ) {
   WiFiClient client;
   if (!client.connect(host, httpPort)) {
     Serial.println("connection failed");
-    return;
+    return "-1";
   }
 
   // We now create a URI for the request
   Serial.print("Requesting URL: ");
-  Serial.println(url);
+  Serial.println(host + url);
 
   // This will send the request to the server
   client.print( String("GET ") + url + " HTTP/1.1\r\n" +
@@ -22,23 +22,71 @@ void urlRequest( char host[], String url, int httpPort ) {
                 "Connection: close\r\n\r\n");
   delay(10);
 
+  String response = "";
+  String headers = "";
+  bool pastHeaders = false;
+  int rn = 0;
   // Read all the lines of the reply from server and print them to Serial
   while (client.available()) {
     String line = client.readStringUntil('\r');
-    Serial.print(line);
-  }
+    //Serial.print(line);
 
-  Serial.println();
-  Serial.println("closing connection");
+    if ( line.equals("\n") ) {
+      pastHeaders = true;
+    }
+    
+    line.trim();
 
+    if (
+      line.length() == 0
+//      || line.equals("\n")
+//      || line.equals("a")
+//      || line.equals("a\n")
+//      || line.equals("a\r")
+//      || line.equals("0")
+//      || line.equals("0\n")
+//      || line.equals("0\r")
+    )
+    {
+      Serial.println("skipping:" + line );
+
+    } else {
+      if ( pastHeaders ) {
+
+        if( rn==1 ){
+          response += line;
+        }
+        Serial.println( "[" + String(rn) + "]" + line );
+        
+        rn++;
+      } else {
+        headers += line;
+        //response="";
+      }
+    }
+  }// end response processing
+
+  Serial.println( "RESPONSE=[" + response + "]" );
+  //  Serial.println("closing connection");
+  return response;
 }
 
-void provisionDevice() {
 
-  //char host[] = "10.5.1.25";
-  //int port = 3000;
-  //char host[] = "api-quadroponic.rhcloud.com";
-  //int port = 80;
+
+int _now = 0;
+/**
+   This will set the value _now using the api
+
+ **/
+void getTime() {
+
+  String url = "/now";
+  String response = urlRequest( API_HOST, url, API_PORT );
+  _now = response.toInt();
+
+  Serial.println( "NOW=[" + String(_now ) + "]");
+}
+void provisionDevice() {
 
   String url = "/v1/provision?type=node";
 

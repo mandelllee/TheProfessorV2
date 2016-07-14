@@ -85,8 +85,8 @@ bool _enableOTAUpdate = true;
 bool _phSensorEnabled = false;
 bool _uptime_display = true;
 String uptime_string = "";
-
-
+bool _luxSensorEnabled = false;
+bool _BMP085Enabled = false;
 
 #include <SoftwareSerial.h>
 SoftwareSerial BT(14, 12);
@@ -128,6 +128,9 @@ String promptTitle;
 String promptText;
 double promptLength = 0.00;
 
+#include "leaflift_api.h"
+
+
 unsigned long _tickCount = 0;
 Scheduler ticker;
 
@@ -138,6 +141,8 @@ void TickCallback() {
   // if we have counted 60 seconds
   if ( _tickCount % 60 == 0 ) {
   }
+  _now++;
+  
 }
 
 //const uint16_t aport = 8266;
@@ -154,7 +159,6 @@ void TickCallback() {
 //  } //- See more at: http://www.esp8266.com/viewtopic.php?f=8&t=5597#sthash.ITMN1A9x.dpuf
 //}
 
-#include "leaflift_api.h"
 #include "leaflift_OTA.h"
 #include "dht_sensor.h"
 
@@ -228,6 +232,9 @@ void setupBMP085Sensor() {
 }
 int _lastTempC;
 int _lastTempF;
+int _lastAltitude;
+int _lastPressure;
+
 double _currentFarenheightEnv = 0.00;
 void readBMP085Sensor() {
 
@@ -242,16 +249,20 @@ void readBMP085Sensor() {
     recordValue( "environment", "bmp180_temp_f", String(_lastTempF), _hostname );
   }
 
+  _lastPressure = bmp.readPressure();
   Serial.print("Pressure = ");
-  Serial.print(bmp.readPressure());
+  Serial.print( String(_lastPressure) );
   Serial.println(" Pa");
-
+  
+ 
+  _lastAltitude = bmp.readAltitude();
+  
   // Calculate altitude assuming 'standard' barometric
   // pressure of 1013.25 millibar = 101325 Pascal
   Serial.print("Altitude = ");
-  Serial.print(bmp.readAltitude());
+  Serial.print( String(_lastAltitude) );
   Serial.println(" meters");
-
+  
   Serial.print("Pressure at sealevel (calculated) = ");
   Serial.print(bmp.readSealevelPressure());
   Serial.println(" Pa");
@@ -399,16 +410,18 @@ String getJSONStatus( ) {
 String getJSONStatus( String msg )
 {
   String i2c_string = get_i2cString();
-  String data = "{\n  \"board_id\":\"" + BOARD_ID + "\",\n  \"chip_id\":\"" + chip_id + "\",\n  \"uptime\":\"" + uptime_string + "\",\n  \"core_version\":\"" + VERSION + "\",\n  \"ip\":\"" + ipAddressString + "\",\n  \"hostname\":\"" + _hostname + "\",\n  \"i2c\":[" + i2c_string + "]";
+  String data = "{\n  \"board_id\":\"" + BOARD_ID + "\",\n  \"chip_id\":\"" + chip_id + "\",\n  \"now\":\"" + String(_now) + "\",\n  \"uptime\":\"" + uptime_string + "\",\n  \"core_version\":\"" + VERSION + "\",\n  \"ip\":\"" + ipAddressString + "\",\n  \"hostname\":\"" + _hostname + "\",\n  \"i2c\":[" + i2c_string + "]";
 
   data += ",\n  \"api_enabled\": \"" + String(SEND_DATA_TO_API ? "1" : "0") + "\"";
   data += ",\n  \"api_interval\": \"" + String(SEND_DATA_INTERVAL) + "\"";
   data += ",\n  \"api_host\": \"" + String(API_HOST) + "\"";
+  data += ",\n  \"api_port\": \"" + String(API_PORT) + "\"";
   data += ",\n  \"ph_sensor\": \"" + String(_phSensorEnabled ? "1" : "0") + "\"";
   data += ",\n  \"temp_probes\": \"" + String(_enableTempProbes ? "1" : "0") + "\"";
   data += ",\n  \"uptime_display\": \"" + String(_uptime_display ? "1" : "0") + "\"";
   data += ",\n  \"bluetooth\": \"" + String(bluetoothAvailable ? "1" : "0") + "\"";
   data += ",\n  \"ota\": \"" + String(_enableOTAUpdate ? "1" : "0") + "\"";
+  data += ",\n  \"lux_sensor\": \"" + String( _luxSensorEnabled ? "1" : "0") + "\"";
   data += ",\n  \"dht_sensor\": \"" + String( _dhtSensorEnabled ? "1" : "0") + "\"";
   data += ",\n  \"soil\": \"" + String( _soilSensorEnabled ? "1" : "0") + "\"";
   data += ",\n  \"soil_sensor\": \"" + String( _soilSensorEnabled ? "1" : "0") + "\"";
@@ -432,7 +445,7 @@ String getJSONData( String msg )
 
   data += "  \"sensors\": {";
   //  data += "\n    \"uid\": \"000000\"";
-  data += "\n    \"time\": \"000000\"";
+  data += "\n    \"now\": \""+String(_now)+"\"";
 
   if ( _phSensorEnabled ) data += ",\n    \"ph\": \"" + String(ph_value_double) + "\"";
 
@@ -445,9 +458,24 @@ String getJSONData( String msg )
     data += "\n    }";
   }
 
+
+  if ( _luxSensorEnabled ) {
+    data += ",\n    \"tsl2561\": {";
+    data += "\n      \"lux\": \"" + String( _lastLUXReading ) + "\"";
+    data += "\n    }";
+  }
+  if ( _BMP085Enabled ) {
+    data += ",\n    \"bmp085\": {";
+    data += "\n      \"temp_c\": \"" + String( _lastTempC ) + "\"";
+    data += "\n      \"temp_f\": \"" + String( _lastTempF ) + "\"";
+    data += "\n      \"altitude\": \"" + String( _lastAltitude ) + "\"";
+    data += "\n      \"pressure\": \"" + String( _lastPressure ) + "\"";
+    data += "\n    }";
+  }
   if ( _dhtSensorEnabled ) {
-    data += ",\n    \"dht\": {";
+    data += ",\n    \"dht11\": {";
     data += "\n      \"dht_temp_f\": \"" + String( dht_temp_f ) + "\"";
+    //data += "\n      \"dht_temp_c\": \"" + String( dht_temp_c ) + "\"";
     data += ",\n      \"dht_humidity\": \"" + String( dht_humidity ) + "\"";
     data += "\n    }";
   }
@@ -459,14 +487,14 @@ String getJSONData( String msg )
     data += ",\n         \"3\":\"" + String( sensorReadings[2] ) + "\"";
     data += ",\n         \"4\":\"" + String( sensorReadings[3] ) + "\"";
     data += "\n      }";
- 
-    data+= _soilConfigJSON;
-   
+
+    data += _soilConfigJSON;
+
     //data += "\"state\":\"" + _soilState + "\"";
     //data += ", \"moisture\":\"" + String(_soilMoistureReading) + "\" ";
     data += "\n    }";
 
-    
+
   }
   data += "\n";
   data += "   }\n";
@@ -662,7 +690,7 @@ void SensorCallback() {
   if (n > 255) n = 0;
 
   if ( _enableTempProbes ) readTemperatureSensors();
-  
+
   if ( hasDevice( ph_sensor_address ) ) {
     readPhSensor();
   }
@@ -670,10 +698,10 @@ void SensorCallback() {
     readLUXSensor();
   }
 
-  if ( hasDevice( 119 ) ) {
+  //if ( hasDevice( 119 ) ) {
+  if ( _BMP085Enabled ) {
     readBMP085Sensor();
   }
-
   if (_dhtSensorEnabled ) {
     readDHTSensor();
   }
@@ -749,8 +777,11 @@ void setup() {
   setupOTAUpdate();
 
   Serial.println("System ready.");
+  
+  getTime();
   recordValue( "system", "status", "ready", _hostname );
 }
+
 
 void MDNSConnect() {
   if (!MDNS.begin( _hostname.c_str() )) {
@@ -850,7 +881,8 @@ void renderDisplay() {
   if (_enableOTAUpdate) {
     display.drawBitmap(96, 48, otaIcon, 32, 16, WHITE );
   }
-  if ( hasDevice( 57 ) ) {
+  //if ( hasDevice( 57 ) ) {
+  if ( _luxSensorEnabled ) {
     display.println( " LUX: " + String( _lastLUXReading ) + "" );
   }
   if ( hasDevice( 119 ) ) {
