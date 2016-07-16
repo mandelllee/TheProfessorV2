@@ -11,24 +11,30 @@ bool _enableTempProbes = false;
 String _soilState = "?";
 
 
-int soilSensorPin1 = 14;
-int soilSensorPin2 = 12;
-int soilSensorPin3 = 13;
-int soilSensorPin4 = 15;
+//int soilSensorPin1 = 14;
+//int soilSensorPin2 = 12;
+//int soilSensorPin3 = 13;
+//int soilSensorPin4 = 15;
 
+int soilSensorPin1 = -1;
+int soilSensorPin2 = -1;
+int soilSensorPin3 = -1;
+int soilSensorPin4 = -1;
 
 int relayPin1 = 4;
 int relayPin2 = 5;
 int relayPin3 = 6;
 int relayPin4 = 7;
 
-
+int _lastSoilReportTime[] = {0,0,0,0};
 int sensorReadings[] = {0, 0, 0, 0};
+
+String soilSensorLabel[] = {"soil1","soil2", "soil3", "soil4"};
+
 bool useIOForSoilSensor = false;
 
-int soilReadFrequency = 30 * 1000;
-
-
+int soilReadFrequency = 10 * 1000;
+int soilReportFrequencySeconds = 5 * 60;
 
 void setupSoilSensors() {
 
@@ -64,11 +70,9 @@ void setupSoilSensors() {
   pinMode(A0, INPUT); //set up analog pin 0 to be input
 }
 
-
 void readSoilSensor( int pin, int index, String label  ) {
 
   int relayPin = pin + 4;
-
   //Serial.println("POWER ON SOIL SENSOR [" + String(pin) + "]");
   if ( useIOForSoilSensor ) {
     mcp.digitalWrite(relayPin, LOW);
@@ -76,18 +80,13 @@ void readSoilSensor( int pin, int index, String label  ) {
   } else {
     digitalWrite( pin, HIGH );
   }
-  //mcp.digitalWrite(3, HIGH);
-
   Serial.println("WAIT 1 SECOND....");
   //TODO: make this use a task instead of a delay
   delay(1000);
-
   int s = analogRead(A0); //take a sample
   delay( 250 );
-
   sensorReadings[index] = s;
-  Serial.println(label + ": [" + String(s) + "] [pin: " + String(pin) + "] " );
-
+  Serial.println(label + ":[pin: " + String(pin) + "]=[" + String(s) + "]" );
   Serial.println("POWER OFF SOIL PIN[" + String(pin) + "]");
   if ( useIOForSoilSensor ) {
     mcp.digitalWrite(pin, LOW);
@@ -95,11 +94,58 @@ void readSoilSensor( int pin, int index, String label  ) {
   } else {
     digitalWrite( pin, LOW );
   }
-  delay( 250 );
 
-  //recordValue( "environment", "soil", String(_soilMoistureReading), _hostname );
+  // if now is a sane value
+  //if( _now > 1468540194 ){
+//TODO: verify that we have a now value, since it will be needed for proper time recording
+  if( true ){
+  int lastTime = _lastSoilReportTime[index];
+    Serial.println("lasttime=["+String(_lastSoilReportTime[index])+"]" );
+     Serial.println("Next report in: [" + String( (_now - lastTime) ) + "] seconds ["+String(soilReportFrequencySeconds)+"]");
+     
+    //if it's time to report, then let's go for it.
+     if( (_now - lastTime) > soilReportFrequencySeconds ){
+     Serial.println("\n\n\n- - - - - - - - - - - - - - - - - - - \nTime to report soil value");
+     recordValue( "soil", "" + String( soilSensorLabel[index] ), String(s), _hostname );
+     _lastSoilReportTime[index] = _now;
+    }
+  }
+  
+  delay( 250 );
+}
+
+void readSoilSensors() {
+
+  Serial.println("reading soil sensors...");
+
+  if ( soilSensorPin1 != -1 ) readSoilSensor( soilSensorPin1, 0, "1" );
+  if ( soilSensorPin2 != -1 ) readSoilSensor( soilSensorPin2, 1, "2" );
+  if ( soilSensorPin3 != -1 ) readSoilSensor( soilSensorPin3, 2, "3" );
+  if ( soilSensorPin4 != -1 ) readSoilSensor( soilSensorPin4, 3, "4" );
 
 }
+
+
+
+//if(_soilSensorEnabled) {
+
+Task soilSensorInterval( soilReadFrequency, TASK_FOREVER, &readSoilSensors, &sensorScheduler, true);
+//}
+//void setup() {
+//
+//  Serial.begin( 115200 );
+//
+//  setupSoilSensors();
+//}
+//
+//void loop() {
+//  Serial.println("loop");
+//
+//  readSoilSensors();
+//  int delayTime = 2 * 1000;
+//  delay( delayTime );
+//}
+
 
 void interrogate() {
 
@@ -153,35 +199,4 @@ void interrogate() {
 }
 
 
-void readSoilSensors() {
-
-  Serial.println("reading soil sensors...");
-
-  if ( soilSensorPin1 != -1 ) readSoilSensor( soilSensorPin1, 0, "1" );
-  if ( soilSensorPin2 != -1 ) readSoilSensor( soilSensorPin2, 1, "2" );
-  if ( soilSensorPin3 != -1 ) readSoilSensor( soilSensorPin3, 2, "3" );
-  if ( soilSensorPin4 != -1 ) readSoilSensor( soilSensorPin4, 3, "4" );
-
-}
-
-
-
-//if(_soilSensorEnabled) {
-
-Task soilSensorInterval( soilReadFrequency, TASK_FOREVER, &readSoilSensors, &sensorScheduler, true);
-//}
-//void setup() {
-//
-//  Serial.begin( 115200 );
-//
-//  setupSoilSensors();
-//}
-//
-//void loop() {
-//  Serial.println("loop");
-//
-//  readSoilSensors();
-//  int delayTime = 2 * 1000;
-//  delay( delayTime );
-//}
 

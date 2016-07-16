@@ -1,13 +1,13 @@
 
 
-String urlRequest( char host[], String url, int httpPort ) {
+String urlRequest( String host, String url, int httpPort ) {
 
   //String url = "/garden/garden.php?uid=" + _userid + "&action=ph&value=" + String(input) + "&tempc=" + String(temp_c) + "&vcc=" + String(voltValue) + "";
   //char host[] = "gbsx.net";
 
   // Use WiFiClient class to create TCP connections
   WiFiClient client;
-  if (!client.connect(host, httpPort)) {
+  if (!client.connect(host.c_str(), httpPort)) {
     Serial.println("connection failed");
     return "-1";
   }

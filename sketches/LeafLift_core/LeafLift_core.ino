@@ -51,7 +51,8 @@ Scheduler sensorScheduler;
 
 #include "Adafruit_MCP23017.h"
 
-char API_HOST[] = "api-quadroponic.rhcloud.com";
+
+String API_HOST = "api-quadroponic.rhcloud.com";
 int API_PORT = 80;
 //char API_HOST[] = "10.5.1.25";
 //int API_PORT = 3000;
@@ -66,7 +67,7 @@ double ph_value_double = 0.00;
 
 String BOARD_ID = "";
 
-String VERSION = "0.0-skye";
+String VERSION = "0.0-tree";
 
 bool TEST_MODE = false;
 
@@ -142,7 +143,7 @@ void TickCallback() {
   if ( _tickCount % 60 == 0 ) {
   }
   _now++;
-  
+
 }
 
 //const uint16_t aport = 8266;
@@ -253,16 +254,16 @@ void readBMP085Sensor() {
   Serial.print("Pressure = ");
   Serial.print( String(_lastPressure) );
   Serial.println(" Pa");
-  
- 
+
+
   _lastAltitude = bmp.readAltitude();
-  
+
   // Calculate altitude assuming 'standard' barometric
   // pressure of 1013.25 millibar = 101325 Pascal
   Serial.print("Altitude = ");
   Serial.print( String(_lastAltitude) );
   Serial.println(" meters");
-  
+
   Serial.print("Pressure at sealevel (calculated) = ");
   Serial.print(bmp.readSealevelPressure());
   Serial.println(" Pa");
@@ -443,16 +444,18 @@ String getJSONData( String msg )
   if ( msg.length() > 0) data += ",\n  \"msg\": \"" + msg + "\"";
   data += ",\n";
 
+  data += "  \"now\":\"" + String(_now) + "\",\n";
   data += "  \"sensors\": {";
-  //  data += "\n    \"uid\": \"000000\"";
-  data += "\n    \"now\": \""+String(_now)+"\"";
+
+  // always have a first entry, that way all next ones prefix a comma
+  data += "\n    \"uid\": \"000000\"";
 
   if ( _phSensorEnabled ) data += ",\n    \"ph\": \"" + String(ph_value_double) + "\"";
 
   if ( _enableTempProbes ) {
     data += ",\n    \"probes\": {";
-
-    data += "\n      { \"temp_c\": \"" + String(temp_c) + "\" }";
+    String probeid = "avg";
+    data += "\n      \""+probeid+"\": { \"temp_c\": \"" + String(temp_c) + "\" }";
     //data += ",\n    \"temp_c\": \"" + String(temp_c) + "\"";
 
     data += "\n    }";
@@ -467,9 +470,9 @@ String getJSONData( String msg )
   if ( _BMP085Enabled ) {
     data += ",\n    \"bmp085\": {";
     data += "\n      \"temp_c\": \"" + String( _lastTempC ) + "\"";
-    data += "\n      \"temp_f\": \"" + String( _lastTempF ) + "\"";
-    data += "\n      \"altitude\": \"" + String( _lastAltitude ) + "\"";
-    data += "\n      \"pressure\": \"" + String( _lastPressure ) + "\"";
+    data += ",\n      \"temp_f\": \"" + String( _lastTempF ) + "\"";
+    data += ",\n      \"altitude\": \"" + String( _lastAltitude ) + "\"";
+    data += ",\n      \"pressure\": \"" + String( _lastPressure ) + "\"";
     data += "\n    }";
   }
   if ( _dhtSensorEnabled ) {
@@ -514,8 +517,9 @@ void readTemperatureSensors() {
   byte addr[8];
   float celsius, fahrenheit;
 
+  Serial.println("Reading temperature probes...");
   if ( !ds.search(addr)) {
-    Serial.println("No more addresses.");
+    //Serial.println("No more addresses.");
     Serial.println();
     ds.reset_search();
     delay(250);
@@ -597,14 +601,27 @@ void readTemperatureSensors() {
   }
   celsius = (float)raw / 16.0;
   fahrenheit = celsius * 1.8 + 32.0;
-
+  
   currentFarenheight = fahrenheit;
-  temp_c = (double)celsius;
+
+  
   Serial.print("  Temperature = ");
   Serial.print(celsius);
   Serial.print(" Celsius, ");
   Serial.print(fahrenheit);
   Serial.println(" Fahrenheit");
+
+
+  if( temp_c != (double)celsius ){
+   temp_c = (double)celsius;
+
+    // HACK: since the ph Sensor reports the probe temp, we only want to report if it's not enabled
+    if( !_phSensorEnabled ){
+      recordValue( "environment", "probe_temp_f", String( fahrenheit ), _hostname );  
+    }
+  }
+  
+  
 }
 
 
@@ -772,12 +789,12 @@ void setup() {
     setupDHT();
   }
 
-  setupHTTPServer(); Task
+  setupHTTPServer();
   MDNSConnect();
   setupOTAUpdate();
 
   Serial.println("System ready.");
-  
+
   getTime();
   recordValue( "system", "status", "ready", _hostname );
 }
@@ -790,7 +807,7 @@ void MDNSConnect() {
     }
   }
   Serial.println("mDNS hostname: " + _hostname );
-  MDNS.addService("http", "tcp", 80);
+  //MDNS.addService("http", "tcp", 80);
   MDNS.addService("rootgrid-node", "tcp", 80);
 }
 
