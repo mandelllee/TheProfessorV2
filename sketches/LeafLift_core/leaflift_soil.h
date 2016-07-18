@@ -26,10 +26,10 @@ int relayPin2 = 5;
 int relayPin3 = 6;
 int relayPin4 = 7;
 
-int _lastSoilReportTime[] = {0,0,0,0};
+int _lastSoilReportTime[] = {0, 0, 0, 0};
 int sensorReadings[] = {0, 0, 0, 0};
 
-String soilSensorLabel[] = {"soil1","soil2", "soil3", "soil4"};
+String soilSensorLabel[] = {"soil1", "soil2", "soil3", "soil4"};
 
 bool useIOForSoilSensor = false;
 
@@ -97,32 +97,77 @@ void readSoilSensor( int pin, int index, String label  ) {
 
   // if now is a sane value
   //if( _now > 1468540194 ){
-//TODO: verify that we have a now value, since it will be needed for proper time recording
-  if( true ){
-  int lastTime = _lastSoilReportTime[index];
-    Serial.println("lasttime=["+String(_lastSoilReportTime[index])+"]" );
-     Serial.println("Next report in: [" + String( (_now - lastTime) ) + "] seconds ["+String(soilReportFrequencySeconds)+"]");
-     
+  //TODO: verify that we have a now value, since it will be needed for proper time recording
+  if ( true ) {
+    int lastTime = _lastSoilReportTime[index];
+    Serial.println("lasttime=[" + String(_lastSoilReportTime[index]) + "]" );
+    Serial.println("Next report in: [" + String( (_now - lastTime) ) + "] seconds [" + String(soilReportFrequencySeconds) + "]");
+
     //if it's time to report, then let's go for it.
-     if( (_now - lastTime) > soilReportFrequencySeconds ){
-     Serial.println("\n\n\n- - - - - - - - - - - - - - - - - - - \nTime to report soil value");
-     recordValue( "soil", "" + String( soilSensorLabel[index] ), String(s), _hostname );
-     _lastSoilReportTime[index] = _now;
+    if ( (_now - lastTime) > soilReportFrequencySeconds ) {
+      Serial.println("\n\n\n- - - - - - - - - - - - - - - - - - - \nTime to report soil value");
+      recordValue( "soil", "" + String( soilSensorLabel[index] ), String(s), _hostname );
+      _lastSoilReportTime[index] = _now;
     }
   }
-  
+
   delay( 250 );
 }
 
 void readSoilSensors() {
 
   Serial.println("reading soil sensors...");
+  if ( hasDevice( 72 ) ) {
+    Serial.println("Reading ANALOG from 16bit ADC [ADS1X15]");
+    
+    int16_t adc0, adc1, adc2, adc3;
 
-  if ( soilSensorPin1 != -1 ) readSoilSensor( soilSensorPin1, 0, "1" );
-  if ( soilSensorPin2 != -1 ) readSoilSensor( soilSensorPin2, 1, "2" );
-  if ( soilSensorPin3 != -1 ) readSoilSensor( soilSensorPin3, 2, "3" );
-  if ( soilSensorPin4 != -1 ) readSoilSensor( soilSensorPin4, 3, "4" );
+    if ( soilSensorPin1 != -1 ) mcp.digitalWrite(soilSensorPin1, HIGH);
+    if ( soilSensorPin2 != -1 ) mcp.digitalWrite(soilSensorPin2, HIGH);
+    if ( soilSensorPin3 != -1 ) mcp.digitalWrite(soilSensorPin3, HIGH);
+    if ( soilSensorPin4 != -1 ) mcp.digitalWrite(soilSensorPin4, HIGH);
 
+    delay( 2000 );
+
+    if ( soilSensorPin1 != -1 ) {
+      adc0 = ads.readADC_SingleEnded(0);
+      Serial.print("AIN0: "); Serial.println(adc0);
+
+    }
+    if ( soilSensorPin2 != -1 ) {
+      adc1 = ads.readADC_SingleEnded(1);
+      Serial.print("AIN1: "); Serial.println(adc1);
+
+    }
+    if ( soilSensorPin3 != -1 ) {
+      adc2 = ads.readADC_SingleEnded(2);
+      Serial.print("AIN2: "); Serial.println(adc2);
+
+    }
+    if ( soilSensorPin4 != -1 ) {
+      adc3 = ads.readADC_SingleEnded(3);
+      Serial.print("AIN3: "); Serial.println(adc3);
+
+    }
+
+
+
+
+
+
+
+    if ( useIOForSoilSensor ) {
+      if ( soilSensorPin1 != -1 ) mcp.digitalWrite(soilSensorPin1, LOW);
+      if ( soilSensorPin2 != -1 ) mcp.digitalWrite(soilSensorPin2, LOW);
+      if ( soilSensorPin3 != -1 ) mcp.digitalWrite(soilSensorPin3, LOW);
+      if ( soilSensorPin4 != -1 ) mcp.digitalWrite(soilSensorPin4, LOW);
+    }
+  } else {
+    if ( soilSensorPin1 != -1 ) readSoilSensor( soilSensorPin1, 0, "1" );
+    if ( soilSensorPin2 != -1 ) readSoilSensor( soilSensorPin2, 1, "2" );
+    if ( soilSensorPin3 != -1 ) readSoilSensor( soilSensorPin3, 2, "3" );
+    if ( soilSensorPin4 != -1 ) readSoilSensor( soilSensorPin4, 3, "4" );
+  }
 }
 
 

@@ -9,7 +9,7 @@
 //
 //          I2C    I2C   1WIRE
 //          SDA    SCL   Temp   DHT                           Rx2   Tx2   Rx0   Tx0
-//    16  : 5    : 4   : 0    : 2   : 3v  : GND : 14  : 12  : 13  : 15  : 3   : 1   : GND : 3v  :
+//    16  : 5    : 4   : 0    : 722   : 3v  : GND : 14  : 12  : 13  : 15  : 3   : 1   : GND : 3v  :
 //  |--------------------------------------------------------------------------------------------|
 //  |                                                                                            |
 //  |                                                                                            |
@@ -103,6 +103,9 @@ Adafruit_MCP23017 mcp;
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
+
+
+#include "leaflift_ADS1X15.h"
 
 const char* ssid     = "gbsx";
 const char* password = "OrlandoNakazawa!";
@@ -722,7 +725,10 @@ void SensorCallback() {
   if (_dhtSensorEnabled ) {
     readDHTSensor();
   }
-
+  if ( hasDevice( 72 ) ) {
+    readADS1X15();
+    
+  }
 }
 
 
@@ -760,6 +766,8 @@ void setup() {
 
   if ( hasDevice( 72 ) ) {
     Serial.println("[ADS1115] Analog Sensors found 0x48 [72]");
+    setupADS1X15();
+    
   }
 
   if ( hasDevice( 99 ) ) {
@@ -868,7 +876,7 @@ void renderDisplay() {
 
   if ( _uptime_display ) display.println( "  UP: " + uptime_string );
 
-  //display.println( " I2C: " + String(  get_i2cString() ) );
+  display.println( " I2C: " + String(  get_i2cString() ) );
 
   if (haveIOChip) {
     display.println( " I/O: MCP23017" );
