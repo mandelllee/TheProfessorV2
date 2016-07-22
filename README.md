@@ -14,6 +14,9 @@
 # Uploading to boards - Step by step  #
 
 ## NodeMCU 1.0 (ESP-12E Module) ##
+0. arduino ide board manager
+    http://arduino.esp8266.com/versions/2.2.0/package_esp8266com_index.json
+    https://adafruit.github.io/arduino-board-index/package_adafruit_index.json
 1. Select board from Tools > Board:
 2. Click ( > ) to upload, board will reset when done
 
