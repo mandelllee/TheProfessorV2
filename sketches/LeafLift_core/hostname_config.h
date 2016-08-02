@@ -36,8 +36,8 @@ void configureHostname() {
   } else if ( chip_id == "16044072" ) {
     _hostname = "hippo";
 
-    API_HOST = "10.5.1.147";
-    API_PORT = 3000;
+    //API_HOST = "10.5.1.147";
+    //API_PORT = 3000;
 
     _phSensorEnabled = false;
     _enableTempProbes = true;
@@ -45,8 +45,8 @@ void configureHostname() {
 
     useIOForSoilSensor = true;
     soilSensorPin1 = 0;
-    soilSensorPin2 = 1;
-    soilSensorPin3 = 2;
+    soilSensorPin2 = -1;
+    soilSensorPin3 = -1;
     
 // DRY    "1":"310",
 //         "2":"416",
@@ -60,9 +60,59 @@ void configureHostname() {
     int wet[] = {265,323,321,0};
 
     _soilSensorEnabled = true;
-    soilSensorLabel[0] = "soil_hippo1";
-    soilSensorLabel[1] = "soil_hippo2";
-    soilSensorLabel[2] = "soil_hippo3";
+    soilSensorLabel[0] = "mint";
+    soilSensorLabel[1] = "_";
+    soilSensorLabel[2] = "_";
+
+    _soilConfigJSON = ",\n      \"config\": { \n";
+    _soilConfigJSON+= "        \"io\": { \n";
+    _soilConfigJSON+= "          \"controller\":\""+String(useIOForSoilSensor==true?"mcp":"gpio")+"\",\n";
+    _soilConfigJSON+= "          \"pins\": { \n";
+    _soilConfigJSON+= "            \"1\":\""+String(soilSensorPin1)+"\",\n";
+    _soilConfigJSON+= "            \"2\":\""+String(soilSensorPin2)+"\",\n";
+    _soilConfigJSON+= "            \"3\":\""+String(soilSensorPin3)+"\",\n";
+    _soilConfigJSON+= "            \"4\":\""+String(soilSensorPin4)+"\"\n";
+    _soilConfigJSON+= "           }\n";
+    _soilConfigJSON+= "         }\n";
+    _soilConfigJSON+= "       },\n";
+    _soilConfigJSON+= "      \"calibration\": { \n";
+    _soilConfigJSON+= "        \"label\": { \n";
+    _soilConfigJSON+= "          \"1\":\""+soilSensorLabel[0]+"\",\n";
+    _soilConfigJSON+= "          \"2\":\""+soilSensorLabel[1]+"\",\n";
+    _soilConfigJSON+= "          \"3\":\""+soilSensorLabel[2]+"\",\n";
+    _soilConfigJSON+= "          \"4\":\""+soilSensorLabel[3]+"\"\n";
+    _soilConfigJSON+= "         },\n";
+    _soilConfigJSON+= "        \"dry\": { \n";
+    _soilConfigJSON+= "          \"1\":\""+String(dry[0])+"\",\n";
+    _soilConfigJSON+= "          \"2\":\""+String(dry[1])+"\",\n";
+    _soilConfigJSON+= "          \"3\":\""+String(dry[2])+"\",\n";
+    _soilConfigJSON+= "          \"4\":\""+String(dry[3])+"\"\n";
+    _soilConfigJSON+= "         },\n";
+    _soilConfigJSON+= "        \"wet\": { \n";
+    _soilConfigJSON+= "          \"1\":\""+String(wet[0])+"\",\n";
+    _soilConfigJSON+= "          \"2\":\""+String(wet[1])+"\",\n";
+    _soilConfigJSON+= "          \"3\":\""+String(wet[2])+"\",\n";
+    _soilConfigJSON+= "          \"4\":\""+String(wet[3])+"\"\n";
+    _soilConfigJSON+= "        }\n";
+    _soilConfigJSON+= "      }\n";
+
+
+  } else if ( chip_id == "1555028" ) {
+    _hostname = "ford";
+    
+    _phSensorEnabled = false;
+    _enableTempProbes = true;
+    _flowCounterEnabled = false;
+
+    _dhtSensorEnabled = true;
+    soilSensorPin1 = 0;
+    soilSensorPin2 = -1;
+    soilSensorPin3 = -1;
+    _soilSensorEnabled = true;
+    soilSensorLabel[0] = "yoyo1";
+
+    int dry[] = {1343,0,0,0};
+    int wet[] = {15340,0,0,0};
 
     _soilConfigJSON = ",\n      \"config\": { \n";
     _soilConfigJSON+= "        \"io\": { \n";
@@ -101,10 +151,14 @@ void configureHostname() {
     _soilSensorEnabled = false;
     _phSensorEnabled = true;
     _enableTempProbes = true;
+    _flowCounterEnabled = true;
 
   } else if ( chip_id == "13890934" ) {
     _hostname = "potato";
-    _soilSensorEnabled = false;
+    _soilSensorEnabled = true;
+    useIOForSoilSensor = true;
+    soilSensorPin1 = 12;
+    
     _phSensorEnabled = false;
     _enableTempProbes = true;
     _dhtSensorEnabled = false;

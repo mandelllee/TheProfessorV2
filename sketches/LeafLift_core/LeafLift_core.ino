@@ -27,6 +27,23 @@
 //    A   : n/a  : n/a : 10  : 9   : MOSI : CS  : MISO : SCLK : GND : 3v : EN : RST : GND : Vin
 //                                   SPI    SPI   SPI    SPI
 //
+//
+//        I2C   I2C
+//   NC : SDA : SCL : GND : 3v : 7  : 6  : 5  : 4  : 3  : 2  : 1  : 0  
+//  ----------------------------------------------------------------------------------- 
+//  |                                                                                 |
+//  |                                                                                 |
+//  |                                                                                / 
+//  |                            MCP23017                                           | 
+//  |                                                                                \ 
+//  |                                                                                 |
+//  |                                                                                 |
+//  ----------------------------------------------------------------------------------- 
+//   A0 : A1 : A3 : RST : INTB : INTA : 0    : 1    : 2    : 3    : 4   : 5   : 6   : 7
+//                  10KΩ                Light  Pump   Drain Doser   AC1   AC2   AC3   Ac4
+//   GND  GND  GND  GND
+//   (I2C Addr 32)
+
 
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
@@ -67,7 +84,7 @@ double ph_value_double = 0.00;
 
 String BOARD_ID = "";
 
-String VERSION = "0.0-tree";
+String VERSION = "0.0-cape";
 
 bool TEST_MODE = false;
 
@@ -77,7 +94,6 @@ String _hostname = "";
 int i2c_devices[10];
 int i2c_device_count = 0;
 String currentDisplayText = "";
-
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 bool _renderDisplayEnabled = true;
@@ -88,6 +104,7 @@ bool _uptime_display = true;
 String uptime_string = "";
 bool _luxSensorEnabled = false;
 bool _BMP085Enabled = false;
+bool _flowCounterEnabled = false;
 
 #include <SoftwareSerial.h>
 SoftwareSerial BT(14, 12);
@@ -136,6 +153,8 @@ double promptLength = 0.00;
 
 
 unsigned long _tickCount = 0;
+#include "flow_counter.h"
+
 Scheduler ticker;
 
 Task tTicker( 1000, TASK_FOREVER, &TickCallback, &ticker, true);
@@ -145,8 +164,12 @@ void TickCallback() {
   // if we have counted 60 seconds
   if ( _tickCount % 60 == 0 ) {
   }
-  _now++;
 
+
+  if( _flowCounterEnabled ){
+    flowCounterHandler();
+  }
+  _now++;
 }
 
 //const uint16_t aport = 8266;
@@ -281,6 +304,7 @@ void readBMP085Sensor() {
 
 }
 #include "leaflift_soil.h"
+
 
 void setupIO() {
   mcp.begin();      // use default address 0
@@ -464,6 +488,16 @@ String getJSONData( String msg )
     data += "\n    }";
   }
 
+
+  if( _flowCounterEnabled ){
+
+    data += ",\n    \"flow\": {";
+    data += "\n      \"pin\": \"" + String( flowPin1 ) + "\"";
+    data += ",\n      \"count\": \"" + String( flowCounter ) + "\"";
+    data += ",\n      \"lpm\": \"" + String( _lastLPM ) + "\"";
+    data += ",\n      \"lph\": \"" + String( litersPerHour ) + "\"";
+    data += "\n    }";
+  }
 
   if ( _luxSensorEnabled ) {
     data += ",\n    \"tsl2561\": {";
@@ -697,12 +731,20 @@ void CycleCallback();
 Task tCycle( 1000, TASK_FOREVER, &CycleCallback, &ts, true);
 Task tSensor( 10000, TASK_FOREVER, &SensorCallback, &sensorScheduler, true);
 
+int report_interval = 10 * 60 * 1000;
+Task tReportSensorData( report_interval, TASK_FOREVER, &ReportSensorData, &sensorScheduler, true);
+
 void CycleCallback() {
   n++;
   if (n > 255) n = 0;
   renderDisplay();
 }
 
+void ReportSensorData(){
+
+  apiPOST( "/v1/record/sensordata", getJSONData("") );
+    
+}
 
 void SensorCallback() {
 
@@ -729,6 +771,8 @@ void SensorCallback() {
     readADS1X15();
     
   }
+
+  
 }
 
 
@@ -797,6 +841,9 @@ void setup() {
     setupDHT();
   }
 
+  if ( _flowCounterEnabled ) {
+    setupFlowCounter();
+  }
   setupHTTPServer();
   MDNSConnect();
   setupOTAUpdate();
@@ -804,7 +851,11 @@ void setup() {
   Serial.println("System ready.");
 
   getTime();
-  recordValue( "system", "status", "ready", _hostname );
+
+  apiPOST( "/v1/record/nodeconfig", getJSONStatus() );
+  
+  //postValue( "system", "status", "ready" );
+  //recordValue( "system", "status", "ready", _hostname );
 }
 
 
@@ -823,7 +874,7 @@ void updateSwitchStatus( String switch_number, bool state ) {
 
   char host[] = "gbsx.net";
   //urlRequest( "10.5.1.105", "/switch/"+switch_number+"/" + (state?"on":"off") );
-  //urlRequest( "10.5.1.105", "/switch/"+switch_number+"/toggle" );
+  //urlRequest( "10.5.1.105", "/"+switch_number+"/toggle" );
 }
 
 
@@ -894,6 +945,10 @@ void renderDisplay() {
   }
   if ( _dhtSensorEnabled ) {
     display.println( "Humidity: " + String( dht_humidity ) + "%" );
+  }
+  
+  if ( _flowCounterEnabled ) {
+    display.println( " LPH: " + String( litersPerHour ) + "" );
   }
 
 
