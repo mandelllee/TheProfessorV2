@@ -1,5 +1,57 @@
 
 
+
+void httpPOST( String host, int httpPort, String url, String postData ) {
+
+  Serial.print("Requesting URL: ");
+  Serial.println(host + url);
+
+  WiFiClient client;
+  if (!client.connect(host.c_str(), httpPort)) {
+    Serial.println("connection failed");
+    return; //"-1";
+  }
+
+  // This will send the request to the server
+  client.print( String("POST ") + url + " HTTP/1.1\r\n" +
+                "Host: " + host + "\r\n" +
+                "Connection: close\r\n" );
+
+  client.println("User-Agent: LeafNode/1.0");
+  client.println("Content-Type: application/json");
+  client.print("Content-Length: ");
+  client.println(postData.length());
+  client.println();
+  client.println(postData);
+                
+  delay(1000);
+  //yield();
+  
+  //return url;  
+}
+
+String postValue( String object, String property, String value ){
+
+  String host = API_HOST;
+  int port = API_PORT;
+  //String host = "10.5.1.25";
+  //int port = 3000;
+    
+  String url = "/v1/record/sensordata";
+
+  String json = getJSONData("");
+  
+  httpPOST( host, port, url, json );
+}
+
+void apiPOST( String url, String json ){
+  Serial.println("apiPOST: " + url + " \n\n" + json );
+  
+  String host = API_HOST;
+  int port = API_PORT; 
+  httpPOST( host, port, url, json );
+}
+
 String urlRequest( String host, String url, int httpPort ) {
 
   //String url = "/garden/garden.php?uid=" + _userid + "&action=ph&value=" + String(input) + "&tempc=" + String(temp_c) + "&vcc=" + String(voltValue) + "";
