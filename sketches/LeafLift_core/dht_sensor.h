@@ -4,7 +4,7 @@
 bool _dhtSensorEnabled = false;
 
 #define DHTPIN 2
-#define DHTTYPE DHT11   // DHT 11
+#define DHTTYPE DHT22   // DHT 11
 
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -18,7 +18,7 @@ void setupDHT() {
 
 void readDHTSensor() {
 
-  displayTextOnDisplay( "Reading DHT11 sensor...");
+  //displayTextOnDisplay( "Reading DHT22 sensor...");
 
   // Reading temperature or humidity takes about 250 milliseconds!
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
@@ -26,6 +26,8 @@ void readDHTSensor() {
   // Read temperature as Fahrenheit (isFahrenheit = true)
   float f = dht.readTemperature(true);
 
+  dht_temp_f = f;
+  
   //delay( 2000 );
 
 
