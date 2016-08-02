@@ -6,6 +6,7 @@ Adafruit_ADS1115 ads;  /* Use this for the 16-bit version */
 
 void setupADS1X15(){
 	Serial.println("setupADS1X15");
+  ads.setGain(GAIN_ONE); 
 	ads.begin();
 	
 }
