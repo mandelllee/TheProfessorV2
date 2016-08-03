@@ -44,7 +44,20 @@
 //   GND  GND  GND  GND
 //   (I2C Addr 32)
 
+String VERSION = "0.0-cape";
 
+String BOARD_ID = "";
+
+bool TEST_MODE = false;
+String chip_id = "";
+String _hostname = "";
+
+
+int _now = 0;
+/**
+   This will set the value _now using the api
+
+ **/
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_TSL2561_U.h>
@@ -83,14 +96,6 @@ bool _soilSensorEnabled = false;
 double temp_c = 0.00;
 double ph_value_double = 0.00;
 
-String BOARD_ID = "";
-
-String VERSION = "0.0-cape";
-
-bool TEST_MODE = false;
-
-String chip_id = "";
-String _hostname = "";
 
 int i2c_devices[10];
 int i2c_device_count = 0;

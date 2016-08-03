@@ -97,6 +97,21 @@ void configureHostname() {
     _soilConfigJSON+= "      }\n";
 
 
+  } else if ( chip_id == "1770948" ) {
+    _hostname = "piru";
+    _soilSensorEnabled = true;
+    _phSensorEnabled = true;
+    _enableTempProbes = true;
+    _dhtSensorEnabled = true;
+
+  } else if ( chip_id == "13382423" ) {
+
+    _hostname = "fillmore";
+    
+  } else if ( chip_id == "12601523" ) {
+    _hostname = "pirupower";
+
+
   } else if ( chip_id == "1555028" ) {
     _hostname = "ford";
     
@@ -163,6 +178,20 @@ void configureHostname() {
     _enableTempProbes = true;
     _dhtSensorEnabled = false;
 
+    _useIOForSwitchChannels = true;
+    ch1_label = "Light [0]";
+    ch1_pin = 0;
+
+    ch2_label = "Pump [1]";
+    ch2_pin = 1;
+
+    ch3_label = "Drain [2]";
+    ch3_pin = 2;
+
+    ch4_label = "Doser Pump [3]";
+    ch4_pin = 3;
+
+
   } else if ( chip_id == "14558901" ) {
     _hostname = "pepper";
     
@@ -213,13 +242,7 @@ void configureHostname() {
     //    _enableTempProbes = false;
     //    _dhtSensorEnabled = true;
 
-  } else if ( chip_id == "1770948" ) {
-    _hostname = "piru";
-    _soilSensorEnabled = true;
-    _phSensorEnabled = true;
-    _enableTempProbes = true;
-    _dhtSensorEnabled = true;
-
+  
   } else if ( chip_id == "13916356" ) {
     _hostname = "tempo";
     _soilSensorEnabled = false;

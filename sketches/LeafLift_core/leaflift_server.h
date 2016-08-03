@@ -23,6 +23,9 @@ void setupHTTPServer() {
     server.send(200, "application/json", getJSONData("") );
   });
 
+  server.on("/switches.json", []() {
+    server.send(200, "application/json", getSwitchJSON() );
+  });
   
 
   server.on("/switches", []() {

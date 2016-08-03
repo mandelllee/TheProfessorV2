@@ -125,11 +125,6 @@ String urlRequest( String host, String url, int httpPort ) {
 
 
 
-int _now = 0;
-/**
-   This will set the value _now using the api
-
- **/
 void getTime() {
 
   String url = "/now";
