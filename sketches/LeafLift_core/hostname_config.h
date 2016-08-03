@@ -165,6 +165,7 @@ void configureHostname() {
 
   } else if ( chip_id == "14558901" ) {
     _hostname = "pepper";
+    
     useIOForSoilSensor = true;
     _soilSensorEnabled = true;
     soilSensorLabel[0] = "Fuchia";
@@ -201,7 +202,7 @@ void configureHostname() {
     
     _phSensorEnabled = false;
     _enableTempProbes = false;
-    _dhtSensorEnabled = false;
+    _dhtSensorEnabled = true;
 
 
 

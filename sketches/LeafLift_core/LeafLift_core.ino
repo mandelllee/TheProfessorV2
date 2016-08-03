@@ -67,6 +67,7 @@ Scheduler sensorScheduler;
 #include "leaflift_crypto.h"
 
 #include "Adafruit_MCP23017.h"
+#include "leaflift_switches.h"
 
 
 String API_HOST = "api-quadroponic.rhcloud.com";
