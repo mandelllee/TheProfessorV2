@@ -99,10 +99,12 @@ void configureHostname() {
 
   } else if ( chip_id == "1770948" ) {
     _hostname = "piru";
-    _soilSensorEnabled = true;
+    _soilSensorEnabled = false;
     _phSensorEnabled = true;
     _enableTempProbes = true;
     _dhtSensorEnabled = true;
+    _luxSensorEnabled = true;
+    _BMP085Enabled = true;
 
   } else if ( chip_id == "13382423" ) {
 
