@@ -483,13 +483,13 @@ String getJSONData( String msg )
   // always have a first entry, that way all next ones prefix a comma
   data += "\n    \"uid\": \"000000\"";
 
-  if ( _phSensorEnabled ) data += ",\n    \"ph\": \"" + String(ph_value_double) + "\"";
+  if ( _phSensorEnabled ) data += ",\n    \"ph\": " + String(ph_value_double) + "";
 
   if ( _enableTempProbes ) {
     data += ",\n    \"probes\": {";
     String probeid = "avg";
-    data += "\n      \""+probeid+"\": { \"temp_c\": \"" + String(temp_c) + "\" }";
-    //data += ",\n    \"temp_c\": \"" + String(temp_c) + "\"";
+    data += "\n      \""+probeid+"\": { \"temp_c\": " + String(temp_c) + " }";
+    //data += ",\n    \"temp_c\": " + String(temp_c) + "";
 
     data += "\n    }";
   }
@@ -507,22 +507,22 @@ String getJSONData( String msg )
 
   if ( _luxSensorEnabled ) {
     data += ",\n    \"tsl2561\": {";
-    data += "\n      \"lux\": \"" + String( _lastLUXReading ) + "\"";
+    data += "\n      \"lux\": " + String( _lastLUXReading ) + "";
     data += "\n    }";
   }
   if ( _BMP085Enabled ) {
     data += ",\n    \"bmp085\": {";
-    data += "\n      \"temp_c\": \"" + String( _lastTempC ) + "\"";
-    data += ",\n      \"temp_f\": \"" + String( _lastTempF ) + "\"";
-    data += ",\n      \"altitude\": \"" + String( _lastAltitude ) + "\"";
-    data += ",\n      \"pressure\": \"" + String( _lastPressure ) + "\"";
+    data += "\n      \"temp_c\": " + String( _lastTempC ) + "";
+    data += ",\n      \"temp_f\": " + String( _lastTempF ) + "";
+    data += ",\n      \"altitude\": " + String( _lastAltitude ) + "";
+    data += ",\n      \"pressure\": " + String( _lastPressure ) + "";
     data += "\n    }";
   }
   if ( _dhtSensorEnabled ) {
     data += ",\n    \"dht11\": {";
-    data += "\n      \"dht_temp_f\": \"" + String( dht_temp_f ) + "\"";
-    //data += "\n      \"dht_temp_c\": \"" + String( dht_temp_c ) + "\"";
-    data += ",\n      \"dht_humidity\": \"" + String( dht_humidity ) + "\"";
+    data += "\n      \"dht_temp_f\": " + String( dht_temp_f ) + "";
+    //data += "\n      \"dht_temp_c\": " + String( dht_temp_c ) + "";
+    data += ",\n      \"dht_humidity\": " + String( dht_humidity ) + "";
     data += "\n    }";
   }
   if ( _soilSensorEnabled ) {
