@@ -67,6 +67,7 @@ int _now = 0;
 #define _TASK_SLEEP_ON_IDLE_RUN
 #define _TASK_STATUS_REQUEST
 #include <TaskScheduler.h>
+#include "leaflift_EC.h"
 
 
 
@@ -111,6 +112,7 @@ String uptime_string = "";
 bool _luxSensorEnabled = false;
 bool _BMP085Enabled = false;
 bool _flowCounterEnabled = false;
+bool _ECSensorEnabled = false;
 
 #include <SoftwareSerial.h>
 SoftwareSerial BT(14, 12);
@@ -451,6 +453,7 @@ String getJSONStatus( String msg )
   data += ",\n  \"api_host\": \"" + String(API_HOST) + "\"";
   data += ",\n  \"api_port\": \"" + String(API_PORT) + "\"";
   data += ",\n  \"ph_sensor\": \"" + String(_phSensorEnabled ? "1" : "0") + "\"";
+  data += ",\n  \"EC_sensor\": \"" + String(_ECSensorEnabled ? "1" : "0") + "\"";
   data += ",\n  \"temp_probes\": \"" + String(_enableTempProbes ? "1" : "0") + "\"";
   data += ",\n  \"uptime_display\": \"" + String(_uptime_display ? "1" : "0") + "\"";
   data += ",\n  \"bluetooth\": \"" + String(bluetoothAvailable ? "1" : "0") + "\"";
@@ -516,6 +519,14 @@ String getJSONData( String msg )
     data += ",\n      \"temp_f\": " + String( _lastTempF ) + "";
     data += ",\n      \"altitude\": " + String( _lastAltitude ) + "";
     data += ",\n      \"pressure\": " + String( _lastPressure ) + "";
+    data += "\n    }";
+  }
+  if ( _ECSensorEnabled ) {
+    data += ",\n    \"EC\": {";
+    data += "\n      \"ec\": " + String( ec_float ) + "";
+    data += ",\n      \"tds\": " + String( tds_float ) + "";
+    data += ",\n      \"salinity\": " + String( sal_float ) + "";
+    data += ",\n      \"specificGravity\": " + String( sg_float ) + "";
     data += "\n    }";
   }
   if ( _dhtSensorEnabled ) {
@@ -778,6 +789,9 @@ void SensorCallback() {
     
   }
 
+  if (_ECSensorEnabled) {
+    readECSensor();
+  }
   
 }
 
@@ -822,6 +836,10 @@ void setup() {
 
   if ( hasDevice( 99 ) ) {
     Serial.println("Altas pH Sensor found [99]");
+  }
+
+  if ( hasDevice( 100 ) ) {
+    Serial.println("Altas EC Sensor found [100]");
   }
 
   if ( hasDevice( 41 ) ) {

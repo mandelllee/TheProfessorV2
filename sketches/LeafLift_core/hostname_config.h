@@ -104,12 +104,14 @@ void configureHostname() {
     _enableTempProbes = true;
     _dhtSensorEnabled = true;
     _luxSensorEnabled = true;
+    _ECSensorEnabled = true;
     _BMP085Enabled = true;
 
   } else if ( chip_id == "13382423" ) {
 
     _hostname = "fillmore";
     _luxSensorEnabled = true;
+    _ECSensorEnabled = true;
   
   } else if ( chip_id == "12601523" ) {
     _hostname = "pirupower";
