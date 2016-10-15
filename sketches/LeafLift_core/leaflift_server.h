@@ -40,6 +40,17 @@ void setupHTTPServer() {
     provisionDevice();
   });
 
+    server.on("/nodeconfig/report_interval", []() {
+      String url = server.uri();
+       int index = url.lastIndexOf('/');
+  String minutes = url.substring(index, url.length());
+  int integerMinutes = minutes.toInt();
+ 
+    tReportSensorData.setInterval(integerMinutes*60*1000);
+    Serial.println("Setting report interval to " + minutes + " minutes");
+  });
+
+
   server.on("/nodeconfig/api_enabled/0", []() {
     SEND_DATA_TO_API = false;
     sendStatusJSON("API Sending OFF ");

@@ -152,6 +152,9 @@ void provisionDevice() {
 
 void recordValue(  String ty, String propertyname, String value, String id_value ) {
 
+  //hack to turn this off
+  return;
+
   if ( SEND_DATA_TO_API == false ) {
     Serial.println("API disbaled");
     return;
