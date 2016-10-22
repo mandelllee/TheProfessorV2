@@ -8,10 +8,10 @@ void setupHTTPServer() {
 
   server.on("/synctime", []() {
     getTime();
-    
+
     server.send(200, "text/plain", String( _now ) );
   });
-  
+
   server.on("/config.json", []() {
     server.send(200, "application/json", getJSONStatus() );
   });
@@ -26,7 +26,7 @@ void setupHTTPServer() {
   server.on("/switches.json", []() {
     server.send(200, "application/json", getSwitchJSON() );
   });
-  
+
 
   server.on("/switches", []() {
     server.send(200, "text/html", "<html><head><script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js\"></script><script src=\"http://gbsx.net/switches.js\"></script></head><body></body></html>");
@@ -40,14 +40,14 @@ void setupHTTPServer() {
     provisionDevice();
   });
 
-    server.on("/nodeconfig/report_interval", []() {
-      String url = server.uri();
-       int index = url.lastIndexOf('/');
-  String minutes = url.substring(index, url.length());
-  int integerMinutes = minutes.toInt();
+  server.on("/nodeconfig/report_interval", []() {
+    String reportingIntervalMinutesString = server.arg("reportingInterval");
+    int reportingIntervalMinutes = reportingIntervalMinutesString.toInt();
+    int report_interval = reportingIntervalMinutes * 60 * 1000;
+    tReportSensorData.setInterval(report_interval);
+    server.send(200, "text/plain", "Setting report interval to " + reportingIntervalMinutesString + " minutes" );
  
-    tReportSensorData.setInterval(integerMinutes*60*1000);
-    Serial.println("Setting report interval to " + minutes + " minutes");
+    Serial.println("Setting report interval to " + reportingIntervalMinutesString + " minutes");
   });
 
 
@@ -181,7 +181,7 @@ void setupHTTPServer() {
 
 
 
-server.on("/switch/4/0", []() {
+  server.on("/switch/4/0", []() {
     server.send(200, "text/plain", "1" );
     Serial.println("Setting switch [4] 0 ");
     mcp.digitalWrite( 4, HIGH );
@@ -225,7 +225,7 @@ server.on("/switch/4/0", []() {
     mcp.digitalWrite( 7, LOW );
   });
 
-  
+
 
   server.begin();
 }
