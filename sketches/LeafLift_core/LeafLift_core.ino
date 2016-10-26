@@ -423,10 +423,6 @@ void sendStatusJSON( String msg ) {
   server.send(200, "text/plain", getJSONStatus( msg ) );
 }
 
-
-#include "leaflift_server.h"
-
-
 String get_i2cString() {
   String i2c_string = "";
   for (int n = 0; n < 10; n++) {
@@ -748,8 +744,13 @@ void CycleCallback();
 Task tCycle( 1000, TASK_FOREVER, &CycleCallback, &ts, true);
 Task tSensor( 10000, TASK_FOREVER, &SensorCallback, &sensorScheduler, true);
 
-int report_interval = 10 * 60 * 1000;
+int reportingIntervalMinutes = 10;
+int report_interval = reportingIntervalMinutes * 60 * 1000;
+
+//int report_interval = 15 * 1000;
 Task tReportSensorData( report_interval, TASK_FOREVER, &ReportSensorData, &sensorScheduler, true);
+
+#include "leaflift_server.h"
 
 void CycleCallback() {
   n++;

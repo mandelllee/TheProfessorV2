@@ -37,6 +37,7 @@ void setupHTTPServer() {
   });
 
   server.on("/provision", []() {
+    Serial.println("Provision Device");
     provisionDevice();
   });
 

@@ -109,9 +109,9 @@ void configureHostname() {
 
   } else if ( chip_id == "13382423" ) {
 
-    _hostname = "fillmore";
+    _hostname = "EastVillage";
     _luxSensorEnabled = true;
-    _ECSensorEnabled = true;
+    _dhtSensorEnabled = true;
   
   } else if ( chip_id == "12601523" ) {
     _hostname = "pirupower";
