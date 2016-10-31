@@ -15,3 +15,4 @@ bool MultipleValueDevice::multipleValues() {
     return true;
 }
 
+

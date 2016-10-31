@@ -11,8 +11,9 @@ public:
     const char* getName();
     int totalValues();
     int getValues(float *values);
+    JsonObject& getValuesJson();
     const char* getSensorType();
-    const int getSensorQuantities(int quantities[]);
+    const int getSensorQuantities(String quantities[]);
 };
 
 DHTDevice::DHTDevice(int pin, int dhtType){
@@ -31,9 +32,9 @@ const char * DHTDevice::getSensorType(){
     return "DHT";
 }
 
-const int DHTDevice::getSensorQuantities(int quantities[]){
-    quantities[0] = TEMPERATURE;
-    quantities[1] = HUMIDITY;
+const int DHTDevice::getSensorQuantities(String quantities[]){
+    quantities[0] = quantities_table[TEMPERATURE];
+    quantities[1] = quantities_table[HUMIDITY];
     return 2;
 }
 
@@ -56,6 +57,30 @@ int DHTDevice::getValues(float *values){
     }
 
     return 2;
+}
+
+JsonObject& DHTDevice::getValuesJson() {
+  StaticJsonBuffer<200> jsonBuffer;
+  JsonObject& jsonWrapper = jsonBuffer.createObject();
+  JsonObject& data = jsonWrapper.createNestedObject(getName());
+
+    sensors_event_t event;
+    sensor_->temperature().getEvent(&event);
+   if (isnan(event.temperature)) {
+        data["temperature"] = -1;
+    }
+    else {
+        data["temperature"] = event.temperature;
+    }
+    sensor_->humidity().getEvent(&event);
+    if (isnan(event.relative_humidity)) {
+        data["humidity"] = -1;
+    }
+    else {
+        data["humidity"] = event.relative_humidity;
+    }
+  return jsonWrapper;
+
 }
 
 int DHTDevice::totalValues() {

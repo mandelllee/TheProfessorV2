@@ -69,6 +69,8 @@ int _now = 0;
 #include <TaskScheduler.h>
 #include "leaflift_EC.h"
 
+#include <ArduinoJson.h>
+
 
 
 int oneWirePin = 0;
@@ -86,7 +88,7 @@ Scheduler sensorScheduler;
 
 String API_HOST = "api-quadroponic.rhcloud.com";
 int API_PORT = 80;
-//char API_HOST[] = "10.5.1.25";
+//char API_HOST[] = "192.168.0.10";
 //int API_PORT = 3000;
 
 bool SEND_DATA_TO_API = true;
@@ -132,8 +134,8 @@ Adafruit_MCP23017 mcp;
 
 #include "leaflift_ADS1X15.h"
 
-const char* ssid     = "gbsx";
-const char* password = "OrlandoNakazawa!";
+const char* ssid     = "Betsy's wifi";
+const char* password = "ninjaturtle";
 String ipAddressString = "";
 ESP8266WebServer server(80);
 
@@ -196,6 +198,7 @@ void TickCallback() {
 
 #include "leaflift_OTA.h"
 #include "dht_sensor.h"
+#include "sensor.h"
 
 
 void __setupWiFi() {
@@ -774,9 +777,9 @@ void SensorCallback() {
   if ( hasDevice( ph_sensor_address ) ) {
     readPhSensor();
   }
-  if ( hasDevice( 57 ) ) {
-    readLUXSensor();
-  }
+//  if ( hasDevice( 57 ) ) {
+//    readLUXSensor();
+//  }
 
   //if ( hasDevice( 119 ) ) {
   if ( _BMP085Enabled ) {
@@ -793,6 +796,8 @@ void SensorCallback() {
   if (_ECSensorEnabled) {
     readECSensor();
   }
+
+  testNewDevices();
   
 }
 
@@ -804,6 +809,8 @@ bool hasDevice( int address ) {
   }
   return false;
 }
+
+
 void setup() {
 
   configureHostname();
@@ -847,10 +854,10 @@ void setup() {
     Serial.println("Luminosity/Lux Sensor [41]");
   }
 
-  if ( hasDevice( 57 ) ) {
-    Serial.println("[BMP085] Temp Sensor");
-    setupLUXSensor();
-  }
+//  if ( hasDevice( 57 ) ) {
+//    Serial.println("[BMP085] Temp Sensor");
+//    setupLUXSensor();
+//  }
 
   if ( hasDevice( 119 ) ) {
     Serial.println("Barometric Pressure, Temp, Altitude");
@@ -881,6 +888,18 @@ void setup() {
   
   //postValue( "system", "status", "ready" );
   //recordValue( "system", "status", "ready", _hostname );
+
+//  DHT_DigitalSensor dhtSensor(2);
+//   StaticJsonBuffer<200> jsonBuffer;
+//  JsonObject& readings = jsonBuffer.createObject();
+//  if (dhtSensor.getReadings(readings)) {
+//    readings.prettyPrintTo(Serial);
+//  }
+//  Serial.println("DHT Object reading: " + reading.getLabel());
+//  Reading[] readings = dhtSensor.getReadings();
+//  for (int i = 0 ; i < readings.sizeof(); i++) {
+//    Serial.println(readings[i]);
+//  }
 }
 
 
@@ -987,9 +1006,9 @@ void renderDisplay() {
     display.drawBitmap(96, 48, otaIcon, 32, 16, WHITE );
   }
   //if ( hasDevice( 57 ) ) {
-  if ( _luxSensorEnabled ) {
-    display.println( " LUX: " + String( _lastLUXReading ) + "" );
-  }
+//  if ( _luxSensorEnabled ) {
+//    display.println( " LUX: " + String( _lastLUXReading ) + "" );
+//  }
   if ( hasDevice( 119 ) ) {
     display.println( "Temp: " + String( _lastTempF ) + "'F" );
   }
@@ -1142,62 +1161,112 @@ void handleButtons() {
   }
 }
 
-Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT, 12345);
+//Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT, 12345);
 
 
-void setupLUXSensor() {
+//void setupLUXSensor() {
+//
+//
+//  /* Initialise the sensor */
+//  if (!tsl.begin())
+//  {
+//    /* There was a problem detecting the ADXL345 ... check your connections */
+//    Serial.print("Ooops, no TSL2561 detected ... Check your wiring or I2C ADDR!");
+//    while (1);
+//  }
+//
+//  /* You can also manually set the gain or enable auto-gain support */
+//  // tsl.setGain(TSL2561_GAIN_1X);      /* No gain ... use in bright light to avoid sensor saturation */
+//  // tsl.setGain(TSL2561_GAIN_16X);     /* 16x gain ... use in low light to boost sensitivity */
+//  tsl.enableAutoRange(true);            /* Auto-gain ... switches automatically between 1x and 16x */
+//
+//  /* Changing the integration time gives you better sensor resolution (402ms = 16-bit data) */
+//  tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_13MS);      /* fast but low resolution */
+//  // tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_101MS);  /* medium resolution and speed   */
+//  // tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_402MS);  /* 16-bit data but slowest conversions */
+//
+//  /* Update these values depending on what you've set above! */
+//  Serial.println("------------------------------------");
+//  Serial.print  ("Gain:         "); Serial.println("Auto");
+//  Serial.print  ("Timing:       "); Serial.println("13 ms");
+//  Serial.println("------------------------------------");
+//}
 
+//void readLUXSensor() {
+//
+//  sensors_event_t event;
+//  tsl.getEvent(&event);
+//
+//  /* Display the results (light is measured in lux) */
+//  if (event.light)
+//  {
+//    Serial.print(event.light); Serial.println(" lux");
+//
+//    int newVal = event.light;
+//    if ( _lastLUXReading != newVal ) {
+//      _lastLUXReading = newVal;
+//      recordValue( "environment", "lux", String(_lastLUXReading), _hostname );
+//    }
+//
+//  }
+//  else
+//  {
+//    /* If event.light = 0 lux the sensor is probably saturated
+//       and no reliable data could be generated! */
+//    Serial.println("Sensor overload");
+//  }
+//
+//}
 
-  /* Initialise the sensor */
-  if (!tsl.begin())
-  {
-    /* There was a problem detecting the ADXL345 ... check your connections */
-    Serial.print("Ooops, no TSL2561 detected ... Check your wiring or I2C ADDR!");
-    while (1);
-  }
+#include "DHTDevice.h"
+#include "TSL2561Device.h"
 
-  /* You can also manually set the gain or enable auto-gain support */
-  // tsl.setGain(TSL2561_GAIN_1X);      /* No gain ... use in bright light to avoid sensor saturation */
-  // tsl.setGain(TSL2561_GAIN_16X);     /* 16x gain ... use in low light to boost sensitivity */
-  tsl.enableAutoRange(true);            /* Auto-gain ... switches automatically between 1x and 16x */
+Device *dht1 = new DHTDevice(14, DHT22);
+Device *dht2 = new DHTDevice(2, DHT22);
+Device *tsl1 = new TSL2561Device();
 
-  /* Changing the integration time gives you better sensor resolution (402ms = 16-bit data) */
-  tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_13MS);      /* fast but low resolution */
-  // tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_101MS);  /* medium resolution and speed   */
-  // tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_402MS);  /* 16-bit data but slowest conversions */
+void testNewDevices() {
 
-  /* Update these values depending on what you've set above! */
-  Serial.println("------------------------------------");
-  Serial.print  ("Gain:         "); Serial.println("Auto");
-  Serial.print  ("Timing:       "); Serial.println("13 ms");
-  Serial.println("------------------------------------");
+  StaticJsonBuffer<200> jsonBuffer;
+  JsonObject& jsonWrapper = jsonBuffer.createObject();
+  JsonArray& sensors = jsonWrapper.createNestedArray("Sensors");
+
+  int arraySize = dht1->totalValues();
+ float values[arraySize];
+ String quantities[arraySize];
+   dht1->getValues(values);
+   dht1->getSensorQuantities(quantities);
+   JsonObject& jsonValues = sensors.createNestedObject().createNestedObject(dht1->getName());
+   for (int i=0; i < arraySize; i++) {
+    jsonValues[quantities[i]] = values[i];
+   }
+//  Serial.println("New DHT1 values: " + String(values[0]));
+//  Serial.println("New DHT1 values: " + String(values[1]));
+  arraySize = dht2->totalValues();
+   dht2->getValues(values);
+   dht2->getSensorQuantities(quantities);
+   JsonObject& jsonValues2 = sensors.createNestedObject().createNestedObject(dht2->getName());
+   for (int i=0; i < arraySize; i++) {
+    jsonValues2["test"] = values[i];
+   }
+ 
+   dht2->getValues(values);
+  Serial.println("New DHT2 values: " + String(values[0]));
+  Serial.println("New DHT2 values: " + String(values[1]));
+//  sensors.add(dht2->getValuesJson());
+
+  float newValue;
+  newValue = tsl1->getValue();
+   Serial.println("New LUX values: " + String(newValue));
+//   sensors.add(tsl1->getValuesJson());
+   jsonWrapper.prettyPrintTo(Serial);
+
+  
 }
 
-void readLUXSensor() {
 
-  sensors_event_t event;
-  tsl.getEvent(&event);
+//sensorsGetValues();
 
-  /* Display the results (light is measured in lux) */
-  if (event.light)
-  {
-    Serial.print(event.light); Serial.println(" lux");
-
-    int newVal = event.light;
-    if ( _lastLUXReading != newVal ) {
-      _lastLUXReading = newVal;
-      recordValue( "environment", "lux", String(_lastLUXReading), _hostname );
-    }
-
-  }
-  else
-  {
-    /* If event.light = 0 lux the sensor is probably saturated
-       and no reliable data could be generated! */
-    Serial.println("Sensor overload");
-  }
-
-}
 void loop() {
 
   //printDebug("Loop");
