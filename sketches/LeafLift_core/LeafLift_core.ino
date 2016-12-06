@@ -10,7 +10,7 @@
 //          I2C    I2C   1WIRE
 //          SDA    SCL   Temp   DHT                           Rx2   Tx2   Rx0   Tx0
 //    16  : 5    : 4   : 0    : 722   : 3v  : GND : 14  : 12  : 13  : 15  : 3   : 1   : GND : 3v  :
-//  |--------------------------------------------------------------------------------------------|
+//  |--------------------------------------------------------------------------------------------| 
 //  |                                                                                            |
 //  |                                                                                            |
 //  |__________________                                                                          |
@@ -113,6 +113,7 @@ bool _luxSensorEnabled = false;
 bool _BMP085Enabled = false;
 bool _flowCounterEnabled = false;
 bool _ECSensorEnabled = false;
+bool _CO2SensorEnabled = false;
 
 #include <SoftwareSerial.h>
 SoftwareSerial BT(14, 12);
@@ -196,6 +197,7 @@ void TickCallback() {
 
 #include "leaflift_OTA.h"
 #include "dht_sensor.h"
+#include "CO2_Sensor.h"
 
 
 void __setupWiFi() {
@@ -458,6 +460,7 @@ String getJSONStatus( String msg )
   data += ",\n  \"dht_sensor\": \"" + String( _dhtSensorEnabled ? "1" : "0") + "\"";
   data += ",\n  \"soil\": \"" + String( _soilSensorEnabled ? "1" : "0") + "\"";
   data += ",\n  \"soil_sensor\": \"" + String( _soilSensorEnabled ? "1" : "0") + "\"";
+ data += ",\n  \"CO2_sensor\": \"" + String( _CO2SensorEnabled ? "1" : "0") + "\"";
 
   if ( msg.length() > 0) data += ",\n  \"msg\": \"" + msg + "\"";
   data += "\n}";
@@ -507,6 +510,11 @@ String getJSONData( String msg )
   if ( _luxSensorEnabled ) {
     data += ",\n    \"tsl2561\": {";
     data += "\n      \"lux\": " + String( _lastLUXReading ) + "";
+    data += "\n    }";
+  }
+  if ( _CO2SensorEnabled ) {
+    data += ",\n    \"MH-Z16\": {";
+    data += "\n      \"co2\": " + String( CO2Concentration ) + "";
     data += "\n    }";
   }
   if ( _BMP085Enabled ) {
@@ -793,6 +801,10 @@ void SensorCallback() {
   if (_ECSensorEnabled) {
     readECSensor();
   }
+
+  if (_CO2SensorEnabled) {
+    readCO2Sensor();
+  }
   
 }
 
@@ -837,6 +849,11 @@ void setup() {
 
   if ( hasDevice( 99 ) ) {
     Serial.println("Altas pH Sensor found [99]");
+  }
+
+ if ( hasDevice( 77 ) ) {
+    Serial.println("CO2 Sensor found [77]");
+    setupCO2Sensor();
   }
 
   if ( hasDevice( 100 ) ) {
@@ -970,6 +987,7 @@ void renderDisplay() {
   }
   if ( _dhtSensorEnabled ) {
     display.println( "Humidity: " + String( dht_humidity ) + "%" );
+    display.println( "Temp: " + String( dht_temp_f ) + "F" );
   }
   
   if ( _flowCounterEnabled ) {
@@ -991,7 +1009,11 @@ void renderDisplay() {
     display.println( " LUX: " + String( _lastLUXReading ) + "" );
   }
   if ( hasDevice( 119 ) ) {
-    display.println( "Temp: " + String( _lastTempF ) + "'F" );
+    display.println( "Temp: " + String( _lastTempF ) + "F" );
+  }
+
+  if(_CO2SensorEnabled) {
+     display.println( "CO2: " + String( CO2Concentration ) + "ppm" );
   }
 
 
