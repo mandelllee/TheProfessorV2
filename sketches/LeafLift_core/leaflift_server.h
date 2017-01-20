@@ -1,17 +1,67 @@
 
+
+void channelOn( int channel_num ) {
+
+  Serial.println("channel ON "+String(channel_num) );
+
+  setChannelState( channel_num, CHANNEL_ON );
+  updateChannelStates();
+  
+  sendStatusJSON( "1" );
+}
+void channelOff( int channel_num ) {
+
+  Serial.println("channel OFF "+String(channel_num) );
+
+  setChannelState( channel_num, CHANNEL_OFF );
+  updateChannelStates();
+
+  sendStatusJSON( "1" );
+}
+
 void setupHTTPServer() {
   Serial.println("Starting http server...");
 
   server.on("/", []() {
     server.send(200, "text/plain", getJSONStatus() );
   });
-
   server.on("/synctime", []() {
     getTime();
-    
     server.send(200, "text/plain", String( _now ) );
   });
-  
+
+
+  for ( int n = 1; n <= 8; n++ ) {
+
+    String  on_url = "/channel/" + String(n) + "/1";
+    String off_url = "/channel/" + String(n) + "/0";
+    
+//   server.on(on_url.c_str(), [&n]() {channelOff()});
+//   server.on(off_url.c_str(), [&n() {channelOn()});
+
+    server.on(on_url.c_str(), [n]() {
+      
+      Serial.println("Channel ON " + String(n) + "=1" );
+      
+      setChannelState( n, CHANNEL_ON  );
+      updateChannelStates();
+      
+      sendJSON( getChannelStatusJSON() );
+      
+    });
+    
+    server.on(off_url.c_str(), [n]() {
+      
+      Serial.println("Channel OFF " + String(n) + "=0" );
+      
+      setChannelState( n, CHANNEL_OFF );
+      updateChannelStates();
+      
+      sendJSON( getChannelStatusJSON() );
+      
+    });
+  }
+
   server.on("/config.json", []() {
     server.send(200, "application/json", getJSONStatus() );
   });
@@ -26,7 +76,11 @@ void setupHTTPServer() {
   server.on("/switches.json", []() {
     server.send(200, "application/json", getSwitchJSON() );
   });
-  
+
+
+  server.on("/switches.html", []() {
+    server.send(200, "text/html", "<html><head><script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js\"></script><script src=\"http://gbsx.net/switches.js\"></script></head><body></body></html>");
+  });
 
   server.on("/switches", []() {
     server.send(200, "text/html", "<html><head><script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js\"></script><script src=\"http://gbsx.net/switches.js\"></script></head><body></body></html>");
@@ -119,102 +173,101 @@ void setupHTTPServer() {
   });
 
 
-  //TODO: handle hostname
 
-  server.on("/switch/0/0", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [0] 0 ");
-    mcp.digitalWrite( 0, HIGH );
-  });
-  server.on("/switch/0/1", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [0] 1 ");
-    mcp.digitalWrite( 0, LOW );
-  });
+//  server.on("/switch/0/0", []() {
+//    server.send(200, "text/plain", "1" );
+//    Serial.println("Setting switch [0] 0 ");
+//    mcp.digitalWrite( 0, HIGH );
+//  });
+//  server.on("/switch/0/1", []() {
+//    server.send(200, "text/plain", "1" );
+//    Serial.println("Setting switch [0] 1 ");
+//    mcp.digitalWrite( 0, LOW );
+//  });
+//
+//  server.on("/switch/1/0", []() {
+//    server.send(200, "text/plain", "1" );
+//    Serial.println("Setting switch [1] 0 ");
+//    mcp.digitalWrite( 1, HIGH );
+//  });
+//  server.on("/switch/1/1", []() {
+//    server.send(200, "text/plain", "1" );
+//    Serial.println("Setting switch [1] 1 ");
+//    mcp.digitalWrite( 1, LOW );
+//  });
+//
+//  server.on("/switch/2/0", []() {
+//    server.send(200, "text/plain", "1" );
+//    Serial.println("Setting switch [2] 0 ");
+//    mcp.digitalWrite( 2, HIGH );
+//  });
+//  server.on("/switch/2/1", []() {
+//    server.send(200, "text/plain", "1" );
+//    Serial.println("Setting switch [2] 1 ");
+//    mcp.digitalWrite( 2, LOW );
+//  });
+//
+//  server.on("/switch/3/0", []() {
+//    server.send(200, "text/plain", "1" );
+//    Serial.println("Setting switch [3] 0 ");
+//    mcp.digitalWrite( 3, HIGH );
+//  });
+//  server.on("/switch/3/1", []() {
+//    server.send(200, "text/plain", "1" );
+//    Serial.println("Setting switch [3] 1 ");
+//    mcp.digitalWrite( 3, LOW );
+//  });
+//
+//
+//
+//
+//
+//
+//  server.on("/switch/4/0", []() {
+//    server.send(200, "text/plain", "1" );
+//    Serial.println("Setting switch [4] 0 ");
+//    mcp.digitalWrite( 4, HIGH );
+//  });
+//  server.on("/switch/4/1", []() {
+//    server.send(200, "text/plain", "1" );
+//    Serial.println("Setting switch [4] 1 ");
+//    mcp.digitalWrite( 4, LOW );
+//  });
+//
+//  server.on("/switch/5/0", []() {
+//    server.send(200, "text/plain", "1" );
+//    Serial.println("Setting switch [5] 0 ");
+//    mcp.digitalWrite( 5, HIGH );
+//  });
+//  server.on("/switch/5/1", []() {
+//    server.send(200, "text/plain", "1" );
+//    Serial.println("Setting switch [5] 1 ");
+//    mcp.digitalWrite( 5, LOW );
+//  });
+//
+//  server.on("/switch/6/0", []() {
+//    server.send(200, "text/plain", "1" );
+//    Serial.println("Setting switch [6] 0 ");
+//    mcp.digitalWrite( 6, HIGH );
+//  });
+//  server.on("/switch/6/1", []() {
+//    server.send(200, "text/plain", "1" );
+//    Serial.println("Setting switch [6] 1 ");
+//    mcp.digitalWrite( 6, LOW );
+//  });
+//
+//  server.on("/switch/7/0", []() {
+//    server.send(200, "text/plain", "1" );
+//    Serial.println("Setting switch [7] 0 ");
+//    mcp.digitalWrite( 7, HIGH );
+//  });
+//  server.on("/switch/7/1", []() {
+//    server.send(200, "text/plain", "1" );
+//    Serial.println("Setting switch [7] 1 ");
+//    mcp.digitalWrite( 7, LOW );
+//  });
 
-  server.on("/switch/1/0", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [1] 0 ");
-    mcp.digitalWrite( 1, HIGH );
-  });
-  server.on("/switch/1/1", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [1] 1 ");
-    mcp.digitalWrite( 1, LOW );
-  });
 
-  server.on("/switch/2/0", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [2] 0 ");
-    mcp.digitalWrite( 2, HIGH );
-  });
-  server.on("/switch/2/1", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [2] 1 ");
-    mcp.digitalWrite( 2, LOW );
-  });
-
-  server.on("/switch/3/0", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [3] 0 ");
-    mcp.digitalWrite( 3, HIGH );
-  });
-  server.on("/switch/3/1", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [3] 1 ");
-    mcp.digitalWrite( 3, LOW );
-  });
-
-
-
-
-
-
-server.on("/switch/4/0", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [4] 0 ");
-    mcp.digitalWrite( 4, HIGH );
-  });
-  server.on("/switch/4/1", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [4] 1 ");
-    mcp.digitalWrite( 4, LOW );
-  });
-
-  server.on("/switch/5/0", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [5] 0 ");
-    mcp.digitalWrite( 5, HIGH );
-  });
-  server.on("/switch/5/1", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [5] 1 ");
-    mcp.digitalWrite( 5, LOW );
-  });
-
-  server.on("/switch/6/0", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [6] 0 ");
-    mcp.digitalWrite( 6, HIGH );
-  });
-  server.on("/switch/6/1", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [6] 1 ");
-    mcp.digitalWrite( 6, LOW );
-  });
-
-  server.on("/switch/7/0", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [7] 0 ");
-    mcp.digitalWrite( 7, HIGH );
-  });
-  server.on("/switch/7/1", []() {
-    server.send(200, "text/plain", "1" );
-    Serial.println("Setting switch [7] 1 ");
-    mcp.digitalWrite( 7, LOW );
-  });
-
-  
 
   server.begin();
 }

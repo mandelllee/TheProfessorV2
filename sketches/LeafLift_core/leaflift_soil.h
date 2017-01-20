@@ -28,6 +28,7 @@ int relayPin4 = 7;
 
 int _lastSoilReportTime[] = {0, 0, 0, 0};
 int sensorReadings[] = {0, 0, 0, 0};
+double sensorReadingsNormal[] = {0,0,0,0,0};
 
 String soilSensorLabel[] = {"soil1", "soil2", "soil3", "soil4"};
 
@@ -40,7 +41,7 @@ int soilReportFrequencySeconds = 5 * 60;
 void readSoilSensor( int pin, int index, String label  ) {
 
   int relayPin = pin + 4;
-  //Serial.println("POWER ON SOIL SENSOR [" + String(pin) + "]");
+  Serial.println("POWER ON SOIL SENSOR [" + String(pin) + "]");
   if ( useIOForSoilSensor ) {
     //mcp.digitalWrite(relayPin, LOW);
     mcp.digitalWrite(pin, HIGH);
@@ -82,6 +83,21 @@ void readSoilSensor( int pin, int index, String label  ) {
 }
 
 
+float normalizeReading( int max_value, int min_value, int reading ){
+
+  Serial.println( "min: " + String(min_value) + " max: " + String(max_value) + " reading: " + String(reading) );
+  
+  float a = ( reading - min_value );
+  float b = ( max_value - min_value );
+  Serial.println( "a: " + String(a) + " b: " + String( b ) );
+  
+  float v = a / b;
+
+  Serial.println( "Normalized: " + String(v) );
+  return v;
+}
+
+
 void readSoilSensors() {
 
   if (!_soilSensorEnabled) return;
@@ -103,6 +119,9 @@ void readSoilSensors() {
       adc0 = ads.readADC_SingleEnded(0);
       Serial.print("AIN0: "); Serial.println(adc0);
       sensorReadings[0] = adc0;
+       Serial.println("AIN0: "  +String(sensorReadings[0]) );
+      sensorReadingsNormal[0] = normalizeReading( wet_calibration[0], dry_calibration[0], adc0 );
+     Serial.println("normalized_reading[0]: "  +String( sensorReadingsNormal[0] ) ); 
     }
     if ( soilSensorPin2 != -1 ) {
       adc1 = ads.readADC_SingleEnded(1);

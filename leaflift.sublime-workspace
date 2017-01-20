@@ -1,0 +1,1262 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"D",
+				"DHTPIN"
+			],
+			[
+				"board",
+				"boardid"
+			],
+			[
+				"respon",
+				"responseWithHealth"
+			],
+			[
+				"work",
+				"worksheet"
+			],
+			[
+				"works",
+				"worksheets"
+			],
+			[
+				"categ",
+				"category"
+			],
+			[
+				"categor",
+				"categoryLabel"
+			],
+			[
+				"utf",
+				"utf8_safe_decode"
+			],
+			[
+				"safe",
+				"utf8_safe_encode"
+			],
+			[
+				"lo",
+				"loadCategory"
+			],
+			[
+				"o",
+				"offsetParent	.offsetParent()"
+			],
+			[
+				"sect",
+				"section_index"
+			],
+			[
+				"xml",
+				"xmlData"
+			],
+			[
+				"init",
+				"initialize2"
+			],
+			[
+				"arga",
+				"arga_rpc"
+			],
+			[
+				"scr",
+				"script"
+			],
+			[
+				"update",
+				"updateStatement"
+			],
+			[
+				"upda",
+				"updateStatement"
+			],
+			[
+				"leve",
+				"levelid"
+			],
+			[
+				"repla",
+				"replaceWith	.replaceWith()"
+			],
+			[
+				"bad",
+				"badChars"
+			],
+			[
+				"ba",
+				"badChars"
+			],
+			[
+				"sho",
+				"should"
+			],
+			[
+				"deco",
+				"decodedModel"
+			],
+			[
+				"decoded",
+				"decodedModel"
+			],
+			[
+				"enc",
+				"encoded"
+			],
+			[
+				"decode",
+				"decode64"
+			],
+			[
+				"Str",
+				"stringify"
+			],
+			[
+				"hair_",
+				"hair_stage"
+			],
+			[
+				"chi",
+				"childImage"
+			],
+			[
+				"feebac",
+				"feedbackContainer"
+			],
+			[
+				"beg",
+				"beginCourse"
+			],
+			[
+				"A",
+				"Avatar"
+			],
+			[
+				"recr",
+				"records"
+			],
+			[
+				"ob_get",
+				"ob_get_contents"
+			],
+			[
+				"mo",
+				"module"
+			],
+			[
+				"json_",
+				"json_encode"
+			],
+			[
+				"url",
+				"urlencode"
+			],
+			[
+				"worksh",
+				"worksheet"
+			],
+			[
+				"spreadshee",
+				"spreadsheet"
+			],
+			[
+				"_chi",
+				"_child_age_index"
+			],
+			[
+				"_child",
+				"_child_age_years"
+			],
+			[
+				"not",
+				"notfound"
+			],
+			[
+				"ob",
+				"observeError"
+			],
+			[
+				"demo",
+				"debugMode"
+			],
+			[
+				"replace",
+				"replaceTextWithVariable"
+			],
+			[
+				"arr",
+				"arrData"
+			],
+			[
+				"num",
+				"num_weeks"
+			],
+			[
+				"e",
+				"eq	.eq()"
+			],
+			[
+				"link",
+				"linkObjects"
+			],
+			[
+				"us",
+				"userID"
+			],
+			[
+				"font",
+				"font-variant"
+			],
+			[
+				"font-",
+				"font-variant"
+			],
+			[
+				"height",
+				"height_cm"
+			],
+			[
+				"wei",
+				"weight_lb"
+			],
+			[
+				"calcula",
+				"calculateBMI"
+			],
+			[
+				"clik",
+				"clicking"
+			],
+			[
+				"css",
+				"cssValue"
+			],
+			[
+				"chapter",
+				"chapter_links"
+			],
+			[
+				"feed",
+				"feedbackButton"
+			],
+			[
+				"con",
+				"condition"
+			],
+			[
+				"run",
+				"runInit"
+			],
+			[
+				"config",
+				"configData"
+			],
+			[
+				"showN",
+				"showNextButtonIfAllQuestionsAnswered"
+			],
+			[
+				"text",
+				"text-align"
+			],
+			[
+				"manusc",
+				"manuscriptid"
+			],
+			[
+				"strre",
+				"str_replace"
+			],
+			[
+				"print",
+				"print_r"
+			],
+			[
+				"manuscr",
+				"manuscripts"
+			],
+			[
+				"array_ke",
+				"array_keys"
+			],
+			[
+				"html",
+				"htmlentities"
+			],
+			[
+				"asset",
+				"assetsBaseURL"
+			],
+			[
+				"feedbac",
+				"feedbackHTML"
+			],
+			[
+				"question_",
+				"question_index"
+			],
+			[
+				"back",
+				"background-size"
+			],
+			[
+				"mar",
+				"margin-right"
+			],
+			[
+				"tokenq",
+				"token-quiz"
+			],
+			[
+				"setChildA",
+				"setChildAgeInWeeks"
+			],
+			[
+				"setCh",
+				"setChildAgeInWeeks"
+			],
+			[
+				"act",
+				"activity"
+			],
+			[
+				"text-",
+				"text-decoration"
+			],
+			[
+				"bac",
+				"background"
+			],
+			[
+				"inche",
+				"inches_to_cm"
+			],
+			[
+				"weig",
+				"weight_description"
+			],
+			[
+				"ageIn",
+				"ageIndex"
+			],
+			[
+				"data",
+				"data-type"
+			],
+			[
+				"insert",
+				"insertBefore	.insertBefore()"
+			],
+			[
+				"select",
+				"selector"
+			],
+			[
+				"_avatar",
+				"_avatar_profiles"
+			],
+			[
+				"userSe",
+				"userSexIsMale"
+			],
+			[
+				"maping",
+				"mapping_values"
+			],
+			[
+				"string",
+				"string_value"
+			],
+			[
+				"attr",
+				"attr	.attr() - single"
+			],
+			[
+				"mther",
+				"mother_value"
+			],
+			[
+				"age",
+				"age_in_weeks"
+			],
+			[
+				"getAge",
+				"getAgeInWeeks"
+			],
+			[
+				"ava",
+				"avatarID"
+			],
+			[
+				"close",
+				"closeButton"
+			],
+			[
+				"module",
+				"modulename"
+			],
+			[
+				"loadExterna",
+				"loadExternalModule"
+			],
+			[
+				"C",
+				"CurrentUserId"
+			],
+			[
+				"dataSer",
+				"haveDataService"
+			],
+			[
+				"initModel",
+				"initModelState"
+			],
+			[
+				"initMode",
+				"initModelState"
+			],
+			[
+				"Have",
+				"haveDataService"
+			],
+			[
+				"saveMo",
+				"saveModelState"
+			],
+			[
+				"model",
+				"model_JSON"
+			],
+			[
+				"VERBO",
+				"VERBOSE_MODE"
+			],
+			[
+				"VER",
+				"VERBOSE_MODE"
+			],
+			[
+				"cho",
+				"chosenResponse"
+			],
+			[
+				"user",
+				"userResponses"
+			],
+			[
+				"feedbackCon",
+				"feedbackContainer"
+			],
+			[
+				"quiz",
+				"quizid"
+			],
+			[
+				"defa",
+				"defaultInteractionData"
+			],
+			[
+				"this",
+				"thisQuestion"
+			],
+			[
+				"correct",
+				"correctFeedbackText"
+			],
+			[
+				"inter",
+				"interactionData"
+			],
+			[
+				"curre",
+				"currentQuestionInstance"
+			],
+			[
+				"question",
+				"question_num"
+			],
+			[
+				"fun",
+				"function"
+			],
+			[
+				"currentQ",
+				"currentQuestionIndex"
+			],
+			[
+				"mother",
+				"mother_height"
+			],
+			[
+				"owned",
+				"ownedItems"
+			],
+			[
+				"oncli",
+				"onclick"
+			],
+			[
+				"get_cu",
+				"get_current_section_jq"
+			],
+			[
+				"handle",
+				"handleFailure"
+			],
+			[
+				"man",
+				"manuscript_id"
+			],
+			[
+				"target",
+				"targetNode"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "boot_log_description.md",
+			"settings":
+			{
+				"buffer_size": 462,
+				"line_ending": "Unix",
+				"name": "boot_log_description.md"
+			}
+		},
+		{
+			"file": "sketches/LeafLift_core/LeafLift_core.ino",
+			"settings":
+			{
+				"buffer_size": 34559,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "Packages/User/platformio.sublime-build",
+	"command_palette":
+	{
+		"height": 392.0,
+		"selected_items":
+		[
+			[
+				"pre",
+				"HTMLPrettify"
+			],
+			[
+				"pretty",
+				"HTMLPrettify"
+			],
+			[
+				"prett",
+				"HTMLPrettify"
+			],
+			[
+				"format",
+				"XML Lint: Format"
+			],
+			[
+				"set sy",
+				"Set Syntax: C#"
+			],
+			[
+				"insta",
+				"Package Control: Install Package"
+			],
+			[
+				"inst",
+				"Package Control: Install Package"
+			],
+			[
+				"forma",
+				"XML Lint: Format"
+			],
+			[
+				"set",
+				"Set Syntax: C"
+			],
+			[
+				"json",
+				"Pretty JSON: Format (Pretty Print) JSON"
+			],
+			[
+				"javascript",
+				"Set Syntax: JavaScript"
+			],
+			[
+				"javasc",
+				"Set Syntax: JavaScript"
+			],
+			[
+				"j",
+				"Pretty JSON: Format (Pretty Print) JSON"
+			],
+			[
+				"pret",
+				"HTMLPrettify"
+			],
+			[
+				"prtt",
+				"Pretty JSON: Validate"
+			],
+			[
+				"p",
+				"Package Control: Install Package"
+			],
+			[
+				"packa",
+				"Package Control: Remove Package"
+			],
+			[
+				"javascr",
+				"Format: Javascript"
+			],
+			[
+				"java",
+				"Set Syntax: JavaScript"
+			],
+			[
+				"beaut",
+				"Javascript Beautify"
+			],
+			[
+				"package",
+				"Package Control: Install Package"
+			],
+			[
+				"jslin",
+				"JSLint"
+			],
+			[
+				"jslint",
+				"JSLint"
+			],
+			[
+				"JSON",
+				"Pretty JSON: Format (Pretty Print) JSON"
+			],
+			[
+				"PRETTY",
+				"HTMLPrettify"
+			],
+			[
+				"xml",
+				"XML Lint: Format"
+			],
+			[
+				"prety",
+				"HTMLPrettify"
+			],
+			[
+				"html",
+				"HTMLPrettify"
+			],
+			[
+				"lower",
+				"Convert Case: Lower Case"
+			],
+			[
+				"lint",
+				"XML Lint: Format"
+			],
+			[
+				"LOWERC",
+				"Convert Case: Lower Case"
+			],
+			[
+				"html pre",
+				"HTMLPrettify"
+			],
+			[
+				"js",
+				"Pretty JSON: Format (Pretty Print) JSON"
+			],
+			[
+				"jso",
+				"Pretty JSON: Format (Pretty Print) JSON"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"fmt",
+				"phpfmt: format now"
+			],
+			[
+				"phpfmt",
+				"phpfmt: toggle PHP 5.5 compatibility mode"
+			],
+			[
+				"PRETT",
+				"HTMLPrettify"
+			],
+			[
+				"ht",
+				"HTMLPrettify"
+			],
+			[
+				"pack",
+				"Package Control: Enable Package"
+			]
+		],
+		"width": 467.0
+	},
+	"console":
+	{
+		"height": 0.0
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/web/leaflift/apps/arduino_core/platformio.ini",
+		"/Users/pboyd/Library/Application Support/Sublime Text 2/Packages/User/platformio.sublime-build",
+		"/Users/pboyd/Library/Application Support/Sublime Text 2/Packages/User/Distraction Free.sublime-settings",
+		"/private/tmp/Deviot/LeafLift_core/platformio.ini",
+		"/web/leaflift/apps/arduino_core/sketches/LeafLift_core/leaflift_images.h",
+		"/web/leaflift/apps/arduino_core/sketches/LeafLift_core/lux_sensor.c",
+		"/web/leaflift/apps/arduino_core/sketches/LeafLift_core/leaflift_ph.h",
+		"/web/leaflift/apps/arduino_core/sketches/LeafLift_core/leaflift_OTA.h",
+		"/web/leaflift/apps/arduino_core/sketches/LeafLift_core/leaflift_soil.h",
+		"/web/leaflift/apps/arduino_core/sketches/LeafLift_core/dht_sensor.h",
+		"/web/leaflift/apps/arduino_core/sketches/LeafLift_core/lux_sensor.h",
+		"/web/leaflift/apps/arduino_core/sketches/LeafLift_core/LeafLift_core.ino",
+		"/web/leaflift/apps/arduino_core/README.md",
+		"/web/leaflift/apps/arduino_core/sketches/LeafLift_core/hostname_config.h",
+		"/web/leaflift/apps/arduino_core/sketches/LeafLift_core/leaflift_display.h",
+		"/web/leaflift/apps/arduino_core/sketches/LeafLift_core/leaflift_server.h",
+		"/web/leaflift/apps/arduino_core/sketches/LeafLift_core/leaflift_bluetooth.h",
+		"/web/leaflift/apps/arduino_core/sketches/LeafLift_core/leaflift_api.h",
+		"/web/leaflift/apps/arduino_core/sketches/LeafLift_core/leaflift_crypto.h",
+		"/web/macmillan/dev_lives/test/nightwatch_commands/login.js",
+		"/web/macmillan/dev_lives/digfir/dl_middle_childhood.html",
+		"/web/macmillan/dev_lives/nighttest.js",
+		"/web/macmillan/dev_lives/digfir/asset/store/storeitems.json",
+		"/web/macmillan/dev_lives/digfir/dl_early_childhood.html",
+		"/web/macmillan/dev_lives/digfir/dl_babies_and_toddlers.html",
+		"/web/macmillan/dev_lives/digfir/asset/store/main.html",
+		"/web/macmillan/dev_lives/encoding_test.html",
+		"/web/macmillan/dev_lives/src/js/util.js",
+		"/web/macmillan/dev_lives/digfir/asset/ui/assets/css/main.css",
+		"/web/macmillan/dev_lives/src/js/dev_lives_src.js",
+		"/web/macmillan/dev_lives/digfir/asset/ui/mainview.html",
+		"/web/macmillan/dev_lives/Gruntfile.js",
+		"/web/macmillan/dev_lives/digfir/dataservices_tester.html",
+		"/web/macmillan/dev_lives/src/js/Activity.js",
+		"/web/macmillan/dev_lives/digfir/dl_adolescence.html",
+		"/web/macmillan/dev_lives/src/js/store.js",
+		"/web/macmillan/dev_lives/digfir/dl_introduction.html",
+		"/web/macmillan/dev_lives/digfir/css/dev_lives.css",
+		"/web/macmillan/dev_lives/digfir/js/dev_lives.js",
+		"/web/macmillan/dev_lives/src/js/cryptojs.js",
+		"/web/macmillan/dev_lives/app/bower_components/base-64/base64.js",
+		"/web/macmillan/dev_lives/src/css/avatar-maker.css",
+		"/web/macmillan/dev_lives/src/css/manuscript.css",
+		"/web/macmillan/dev_lives/src/css/design2.css",
+		"/web/macmillan/dev_lives/src/js/avatar.js",
+		"/web/macmillan/dev_lives/src/js/tools.js",
+		"/web/macmillan/dev_lives/src/css/ui-slider.css",
+		"/web/macmillan/dev_lives/src/css/ui-dialog.css",
+		"/web/macmillan/dev_lives/src/css/dev_lives.css",
+		"/web/macmillan/dev_lives/digfir/asset/ui/assets/js/functions.js",
+		"/Users/pboyd/.ssh/id_rsa.pub",
+		"/web/macmillan/dev_lives/digfir/asset/quiz/tokenquiz.json",
+		"/web/macmillan/dev_lives/digfir/js/ARGA_wrapper.js",
+		"/web/macmillan/dev_lives/digfir/js/player.js",
+		"/web/macmillan/dev_lives/package.json",
+		"/web/macmillan/dev_lives/static_server.js",
+		"/Users/pboyd/Desktop/svn_errorlog.txt",
+		"/web/macmillan/dev_lives/check_manuscripts.js",
+		"/web/macmillan/ids.txt",
+		"/web/macmillan/dev_lives/digfir/asset/avatar_images/data/18years/boy/10/hair/crew/crew_extremelycurly_black.png",
+		"/web/macmillan/dev_lives/digfir/xml/manuscripts/dl_adolescence.xml",
+		"/web/macmillan/dev_lives/ARGA_wrapper.js",
+		"/web/macmillan/dev_lives/digfir/js/easyXDM-2.4.20.7/example/remote.html",
+		"/web/macmillan/dev_lives/digfir/js/easyXDM-2.4.20.7/example/blank.html",
+		"/web/macmillan/dev_lives/src/js/ARGA_wrapper.js",
+		"/web/macmillan/dev_lives/activity_tracker_example/js/data_services_dev.js",
+		"/web/macmillian/dev_lives/src/js/tracking.js",
+		"/web/macmillian/dev_lives/check_manuscripts.js",
+		"/web/macmillian/dev_lives/digfir/asset/avatar_images/make_file.sh",
+		"/web/macmillian/dev_lives/Gruntfile.js",
+		"/web/macmillian/dev_lives/digfir/asset/avatar_images/export_layers.jsx",
+		"/web/macmillian/dev_lives/parse_psd.js",
+		"/web/macmillian/dev_lives/package.json",
+		"/web/macmillian/dev_lives/test/test.js_",
+		"/web/macmillian/dev_lives/digfir/asset/avatar_images/create_folder_structure.jsx",
+		"/web/macmillian/dev_lives/src/js/avatar.js",
+		"/web/macmillian/dev_lives/digfir/dataservices_tester.html",
+		"/web/macmillian/dev_lives/digfir/dl_adolescence.html",
+		"/web/macmillian/dev_lives/test/test.js",
+		"/web/macmillian/dev_lives/check.js",
+		"/web/macmillian/dev_lives/digfir/dl_introduction.html",
+		"/web/macmillian/dev_lives/digfir/asset/avatar_images/export_script/dialog.json",
+		"/web/macmillian/dev_lives/digfir/js/dev_lives.js",
+		"/web/macmillian/dev_lives/digfir/asset/avatar_images/export_script/progress_bar.json",
+		"/web/macmillian/dev_lives/node_modules/psd/lib/psd/image_exports/png.coffee",
+		"/web/macmillian/dev_lives/node_modules/psd/lib/psd/layer/helpers.coffee",
+		"/web/macmillian/dev_lives/node_modules/psd/Cakefile",
+		"/web/macmillian/dev_lives/node_modules/psd/.travis.yml",
+		"/web/macmillian/dev_lives/node_modules/psd/node_modules/coffeescript-module/README.md",
+		"/web/macmillian/dev_lives/node_modules/psd/node_modules/coffeescript-module/lib/module.js",
+		"/web/macmillian/dev_lives/node_modules/psd/node_modules/coffeescript-module/src/module.coffee",
+		"/web/macmillian/dev_lives/node_modules/psd/index.js",
+		"/web/macmillian/dev_lives/node_modules/jasmine/package.json",
+		"/web/macmillian/dev_lives/parse_psd.js ",
+		"/web/macmillian/dev_lives/digfir/dl_adolescence.html_",
+		"/web/macmillian/dev_lives/digfir/dl_middle_childhood.html_",
+		"/web/macmillian/dev_lives/digfir/dl_prenatal_development.html_",
+		"/web/macmillian/dev_lives/digfir/asset/avatar_images/source/1_month/1_month_girl_other.psd",
+		"/web/macmillian/dev_lives/digfir/asset/avatar_images/data/save_layers.jsx",
+		"/web/macmillian/dev_lives/digfir/asset/avatar_images/data/make_file.sh",
+		"/web/macmillian/dev_lives/digfir/asset/avatar_images/data/create_folder_structure.jsx",
+		"/web/macmillian/dev_lives/src/js/dev_lives_src.js",
+		"/web/macmillian/dev_lives/digfir/dl_babies_and_toddlers.html",
+		"/web/macmillian/dev_lives/src/js/calculators/app.js",
+		"/web/macmillian/dev_lives/digfir/asset/ui/assets/css/main.css",
+		"/web/macmillian/dev_lives/vendor/asimlqt/php-google-spreadsheet-client/src/Google/Spreadsheet/ServiceRequestFactory.php",
+		"/web/macmillian/dev_lives/vendor/asimlqt/php-google-spreadsheet-client/src/Google/Spreadsheet/Worksheet.php",
+		"/web/macmillian/dev_lives/src/css/manuscript.css",
+		"/web/macmillian/dev_lives/src/PX.js",
+		"/web/macmillian/dev_lives/src/js/ARGA_wrapper.js",
+		"/web/macmillian/dev_lives/login.php",
+		"/web/macmillian/dev_lives/digfir/asset/avatar/avatar_editor_view.html",
+		"/web/macmillian/dev_lives/digfir/asset/calculators/height_weight.html",
+		"/web/macmillian/dev_lives/src/js/calculators/datasets.js",
+		"/web/macmillian/dev_lives/digfir/dl_middle_childhood.html",
+		"/web/macmillian/dev_lives/UserFeedback.class.php",
+		"/web/macmillian/dev_lives/RemoteDataSheet.class.php",
+		"/web/macmillian/dev_lives/track.php",
+		"/web/macmillian/dev_lives/digfir/avatar_review.html",
+		"/web/macmillian/dev_lives/sheet_test.php",
+		"/web/macmillian/dev_lives/src/js/util.js",
+		"/web/macmillian/dev_lives/.gitignore",
+		"/web/macmillian/dev_lives/index.html",
+		"/web/macmillian/dev_lives/avatar_bugs.json",
+		"/web/macmillian/dev_lives/composer.json",
+		"/web/macmillian/dev_lives/static_server.js",
+		"/web/macmillian/dev_lives/vendor/autoload.php",
+		"/web/macmillian/dev_lives/digfir/asset/quiz/tokenquiz.json"
+	],
+	"find":
+	{
+		"height": 35.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+			"/web/macmillan/dev_lives/digfir/",
+			"/web/macmillan/dev_lives/digfir/*.js",
+			"/web/macmillan/dev_lives/digfir",
+			"digfir",
+			"",
+			"vendor/",
+			"",
+			"digfir/dl_*",
+			"digfir/*",
+			"src/*",
+			"digfir/dl_*.html",
+			"dl_*.html,-classtest/*,,-digfir-content/*",
+			"dl_*.html,-classtest/*",
+			"dl_*.html,-classtest*",
+			"dl_*.html,-*classtest",
+			"dl_*.html",
+			"*.html",
+			"/web/macmillian/dev_lives/digfir/*.html",
+			"/web/macmillian/dev_lives/digfir/",
+			"/web/macmillian/dev_lives/digfir/dl_*",
+			"/web/macmillian/dev_lives/digfir/xml/manuscripts",
+			"/web/macmillian/dev_lives/digfir/xml",
+			"/web/macmillian/dev_lives/digfir",
+			"/web/macmillian/dev_lives/digfir/asset/styles",
+			"/web/macmillian/dev_lives/digfir/",
+			"/web/macmillian/dev_lives/digfir/asset/dev_lives",
+			"<open folders>",
+			"/Volumes/dooplo.kognito.com/",
+			"/web/kognito/sequencer/Unity/Assets/uSequencer",
+			"/web/kognito/sequencer/Unity/Assets",
+			"/web/kognito/sequencer/Unity/Assetsscroll",
+			"/web/kognito/DooploUnity/Assets/DOOPLO"
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"PORT",
+			"8080",
+			"provision",
+			"record",
+			"port",
+			"active_worksheet",
+			"error",
+			"error\" +",
+			"port",
+			"OPENSHIFT_NODEJS_PORT",
+			"3000",
+			"query",
+			"current_month_string",
+			"current_month_sheet",
+			"current_work",
+			"csum",
+			"debugMode = tr",
+			"debug = tr",
+			"getPa",
+			"player.debugMode = true",
+			"player.debugMode",
+			"getPa",
+			"debug=\"",
+			"debug==\"",
+			"Correct ",
+			"correct",
+			"incorre",
+			"question.getT",
+			"question \"",
+			"gbsx",
+			"Developing Lives\"",
+			"Tutorial",
+			"close.png",
+			"role",
+			"getting to ",
+			"answer",
+			"please an",
+			"show_feedback_dialog",
+			"feedback\nfeedback",
+			"feedback",
+			"showfee",
+			"womens clothes",
+			" \"",
+			"confirm",
+			"user",
+			"nightwatch",
+			"test\"",
+			"nightwatchtest",
+			"nightwatch",
+			"tests",
+			"already have",
+			"hasMemory",
+			"haveMemo",
+			"owns",
+			"Now you get",
+			"addMemory",
+			"alert",
+			"\"(\"",
+			"hasReachedEvent",
+			"available_items",
+			"loadCatego",
+			"title",
+			"f4",
+			"getModule",
+			"module",
+			"modules",
+			"Middle Ch",
+			"loadCurrentMemoryBookModule",
+			"loadMemoryBookCategory",
+			"loadMemo\nloadMemo",
+			"sendModelT",
+			"saveModel",
+			"modulename",
+			"5668ca6f757a2e532a000000",
+			"loadMemoryBookCategory",
+			"comment",
+			"renderStore",
+			"show_memor",
+			"show_store",
+			"memory_",
+			"sendMode",
+			"save",
+			"observeError",
+			"5668c975757a2e1a32000000",
+			"module",
+			"css\"",
+			"loadCa",
+			"\"TBD\"",
+			"ADO12_health_concerns_phrase\"",
+			"processCondition",
+			"nal\"",
+			"processCondition",
+			"grade_act",
+			"sendMo",
+			"save",
+			"filterProblemCharacters",
+			"convertBad",
+			"loadUser",
+			"restoring",
+			"utf8_safe_encode",
+			"saveModelState",
+			"safe_de",
+			"decode64",
+			"base64",
+			"encode64",
+			"update_token_status",
+			"purchase",
+			"18",
+			"renderItem",
+			".ui-tabs .ui-tabs-nav li",
+			"tabs",
+			".ui-tabs",
+			"return",
+			"btn",
+			"initialize_store",
+			"model.tokens",
+			"update_toke",
+			"player.model.available_tokens",
+			"tokens",
+			"buyItem",
+			"buy",
+			"#tabs",
+			"\"TBD\"",
+			"image",
+			"ownItem",
+			"purchase",
+			"renderItem",
+			"renderStore"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"\"TBD.jpg\"",
+			"moderatelyhairy",
+			"stickstraight",
+			"moderatelycurly",
+			"extremelycurly",
+			"&mdash;",
+			"&apos;",
+			"years",
+			"months",
+			"",
+			"\n",
+			"",
+			"\n",
+			"",
+			"&apos;",
+			":",
+			"<",
+			"\"",
+			" ",
+			"},\n ",
+			"},\n",
+			"\"",
+			"_",
+			"&apos;",
+			"src=\"../app",
+			"'",
+			"+ '",
+			"prefix",
+			"",
+			"\"\"",
+			"{}",
+			"",
+			"/dev_lives/",
+			"/dev_lives/asset",
+			"../../",
+			"{",
+			":",
+			"\"",
+			" ",
+			":",
+			" ",
+			"data-block_type=\"avatar-display-baby-inline\"",
+			"data-block_type=\"inline-avatar-display-baby\"",
+			"data-block_type=\"avatar-display-baby\"",
+			"",
+			"value=\"0.0\" ",
+			"input type=\"text\" value=\"0.0\" ",
+			"\"},\ninput type=\"text\" value=\"0.0\" ",
+			"\"},\n{label:\"",
+			"\"input_data[",
+			"></td>",
+			"name=\"data\"><span class=\"note\"></span>",
+			"<tr><td>",
+			"</td><td>",
+			"<td><input type=\"text\" name=\"data\"></td></tr>",
+			"",
+			"src=\"asset/",
+			"src=\"asset",
+			"\"",
+			"",
+			"c=\"1\"",
+			"\"",
+			"'",
+			"",
+			"av\",",
+			"\"as",
+			";\nDROP TABLE ",
+			" => \"?\", //",
+			"",
+			"$this->setStoredValue",
+			"currentValue",
+			"value:String",
+			""
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 1,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "boot_log_description.md",
+					"settings":
+					{
+						"buffer_size": 462,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								192,
+								192
+							]
+						],
+						"settings":
+						{
+							"auto_name": "boot_log_description.md",
+							"syntax": "Packages/Markdown/Markdown.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "sketches/LeafLift_core/LeafLift_core.ino",
+					"settings":
+					{
+						"buffer_size": 34559,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								7054,
+								7054
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Deviot/Arduino.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 3729.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 34.0
+	},
+	"input":
+	{
+		"height": 31.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.Deviot|Build1470687038.24":
+	{
+		"height": 118.0
+	},
+	"output.Deviot|Build1470688718.83":
+	{
+		"height": 118.0
+	},
+	"output.Deviot|Build1470688833.81":
+	{
+		"height": 0.0
+	},
+	"output.Deviot|Library1470687093.04":
+	{
+		"height": 0.0
+	},
+	"output.Deviot|Library1470687093.82":
+	{
+		"height": 0.0
+	},
+	"output.exec":
+	{
+		"height": 195.0
+	},
+	"replace":
+	{
+		"height": 64.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 255.0,
+	"status_bar_visible": true
+}

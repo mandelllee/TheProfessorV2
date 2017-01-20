@@ -4,7 +4,7 @@ void firmwareProgress(unsigned int progress, unsigned int total) {
   Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
 
   //display.clearDisplay();
-  displayTextOnDisplay( "\nUpdating Firmware...\n\n  " +  String( progress / (total / 100) ) + "%" );
+  displayTextOnDisplay( "\n    Updating\n    Firmware...\n\n         " +  String( progress / (total / 100) ) + "%" );
 
 
 };
@@ -41,7 +41,7 @@ void setupOTAUpdate() {
     recordValue( "system", "status", "reboot", "?");
 
     Serial.println("\Rebooting");
-    displayTextOnDisplay( "\n\nRebooting..." );
+    displayTextOnDisplay( "\n\n\n   Rebooting..." );
 
     ESP.restart();
   });

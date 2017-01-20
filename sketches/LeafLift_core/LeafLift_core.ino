@@ -9,7 +9,7 @@
 //
 //          I2C    I2C   1WIRE
 //          SDA    SCL   Temp   DHT                           Rx2   Tx2   Rx0   Tx0
-//    16  : 5    : 4   : 0    : 722   : 3v  : GND : 14  : 12  : 13  : 15  : 3   : 1   : GND : 3v  :
+//    16  : 5    : 4   : 0    : 2   : 3v  : GND : 14  : 12  : 13  : 15  : 3   : 1   : GND : 3v  :
 //  |--------------------------------------------------------------------------------------------|
 //  |                                                                                            |
 //  |                                                                                            |
@@ -27,37 +27,45 @@
 //    A   : n/a  : n/a : 10  : 9   : MOSI : CS  : MISO : SCLK : GND : 3v : EN : RST : GND : Vin
 //                                   SPI    SPI   SPI    SPI
 //
+//https://www.cooking-hacks.com/documentation/tutorials/raspberry-pi-to-arduino-shields-connection-bridge/
+//https://www.cooking-hacks.com/forum/viewtopic.php?f=43&t=8167
+//https://github.com/pfalcon/esp-open-sdk
 //
 //        I2C   I2C
-//   NC : SDA : SCL : GND : 3v : 7  : 6  : 5  : 4  : 3  : 2  : 1  : 0  
-//  ----------------------------------------------------------------------------------- 
+//   NC : SDA : SCL : NC  : GND : 3v : 7  : 6  : 5  : 4  : 3  : 2  : 1  : 0
+//  -----------------------------------------------------------------------------------
 //  |                                                                                 |
 //  |                                                                                 |
-//  |                                                                                / 
-//  |                            MCP23017                                           | 
+//  |                                                                                /
+//  |                            MCP23017                                           |
 //  |                                                                                \ 
 //  |                                                                                 |
 //  |                                                                                 |
-//  ----------------------------------------------------------------------------------- 
+//  -----------------------------------------------------------------------------------
 //   A0 : A1 : A3 : RST : INTB : INTA : 0    : 1    : 2    : 3    : 4   : 5   : 6   : 7
 //                  10KΩ                Light  Pump   Drain Doser   AC1   AC2   AC3   Ac4
-//   GND  GND  GND  GND
+//   GND  GND  GND   V+
 //   (I2C Addr 32)
 
-String VERSION = "0.0-cape";
+String VERSION = "0.0-blake";
 
 String BOARD_ID = "";
-
+bool _buttonBoardConnected = false;
 bool TEST_MODE = false;
 String chip_id = "";
 String _hostname = "";
 
+int dry_calibration[] = {0, 0, 0, 0};
+int wet_calibration[] = {0, 0, 0, 0};
+bool _showBootScreen = false;
 
 int _now = 0;
 /**
    This will set the value _now using the api
 
  **/
+
+
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_TSL2561_U.h>
@@ -68,11 +76,10 @@ int _now = 0;
 #define _TASK_STATUS_REQUEST
 #include <TaskScheduler.h>
 
-
+#include "leaflift_color_display.h"
 
 int oneWirePin = 0;
 OneWire  ds(oneWirePin);  //a 2.2K resistor is necessary for 3.3v on the signal line, 4.7k for 5v
-
 
 Scheduler ts;
 Scheduler sensorScheduler;
@@ -80,7 +87,11 @@ Scheduler sensorScheduler;
 #include "leaflift_crypto.h"
 
 #include "Adafruit_MCP23017.h"
+Adafruit_MCP23017 mcp;
+
 #include "leaflift_switches.h"
+
+
 
 
 String API_HOST = "api-quadroponic.rhcloud.com";
@@ -119,7 +130,7 @@ SoftwareSerial BT(14, 12);
 // connect BT module RX to D11
 // connect BT Vcc to 5V, GND to GND
 
-Adafruit_MCP23017 mcp;
+
 
 
 #include <ESP8266mDNS.h>
@@ -172,7 +183,7 @@ void TickCallback() {
   }
 
 
-  if( _flowCounterEnabled ){
+  if ( _flowCounterEnabled ) {
     flowCounterHandler();
   }
   _now++;
@@ -344,10 +355,14 @@ void setupIO() {
   mcp.pinMode(9, INPUT);
   mcp.pinMode(10, INPUT);
   mcp.pinMode(11, INPUT);
-  //  mcp.pullUp(8, HIGH);
-  //  mcp.pullUp(9, HIGH);
-  //  mcp.pullUp(10, HIGH);
-  //  mcp.pullUp(11, HIGH);
+  mcp.pinMode(12, OUTPUT);
+  mcp.pinMode(13, OUTPUT);
+  mcp.pinMode(14, OUTPUT);
+  mcp.pinMode(15, OUTPUT);
+  mcp.pullUp(8, HIGH);
+  mcp.pullUp(9, HIGH);
+  mcp.pullUp(10, HIGH);
+  mcp.pullUp(11, HIGH);
 
   if ( TEST_MODE ) testSwitches();
 
@@ -422,6 +437,10 @@ void sendStatusJSON( String msg ) {
 }
 
 
+void sendJSON( String msg ) {
+  Serial.println(msg);
+  server.send(200, "text/plain", msg );
+}
 #include "leaflift_server.h"
 
 
@@ -488,14 +507,14 @@ String getJSONData( String msg )
   if ( _enableTempProbes ) {
     data += ",\n    \"probes\": {";
     String probeid = "avg";
-    data += "\n      \""+probeid+"\": { \"temp_c\": \"" + String(temp_c) + "\" }";
+    data += "\n      \"" + probeid + "\": { \"temp_c\": \"" + String(temp_c) + "\" }";
     //data += ",\n    \"temp_c\": \"" + String(temp_c) + "\"";
 
     data += "\n    }";
   }
 
 
-  if( _flowCounterEnabled ){
+  if ( _flowCounterEnabled ) {
 
     data += ",\n    \"flow\": {";
     data += "\n      \"pin\": \"" + String( flowPin1 ) + "\"";
@@ -534,6 +553,14 @@ String getJSONData( String msg )
     data += ",\n         \"4\":\"" + String( sensorReadings[3] ) + "\"";
     data += "\n      }";
 
+    data += ",\n      \"readings\": { ";
+    data += "\n         \"1\":" + String( sensorReadingsNormal[0] ) + "";
+    data += ",\n         \"2\":" + String( sensorReadingsNormal[1] ) + "";
+    data += ",\n         \"3\":" + String( sensorReadingsNormal[2] ) + "";
+    data += ",\n         \"4\":" + String( sensorReadingsNormal[3] ) + "";
+    data += "\n      }";
+
+
     data += _soilConfigJSON;
 
     //data += "\"state\":\"" + _soilState + "\"";
@@ -542,12 +569,42 @@ String getJSONData( String msg )
 
 
   }
+
   data += "\n";
-  data += "   }\n";
-  data += "}\n";
+  data += "   }";
+
+
+  //  if ( _useIOForSwitchChannels ) {
+  //    data += ",\n  \"switches\": [\n";
+  //
+  //    data += "    {\n";
+  //    data += "      \"controller\":\"" + String(_useIOForSwitchChannels == true ? "mcp23017" : "gpio") + "\",\n";
+  //
+  //    data += "      \"channels\": { \n";
+  //    data += "        \"1\": { \"pin\": " + String(ch1_pin) + ", \"state\": " + String(ch1_state) + ", \"label\":\"" + ch1_label + "\" },\n";
+  //    data += "        \"2\": { \"pin\": " + String(ch2_pin) + ", \"state\": " + String(ch2_state) + ", \"label\":\"" + ch2_label + "\" },\n";
+  //    data += "        \"3\": { \"pin\": " + String(ch3_pin) + ", \"state\": " + String(ch3_state) + ", \"label\":\"" + ch3_label + "\" },\n";
+  //    data += "        \"4\": { \"pin\": " + String(ch4_pin) + ", \"state\": " + String(ch4_state) + ", \"label\":\"" + ch4_label + "\" },\n";
+  //    data += "        \"5\": { \"pin\": " + String(ch5_pin) + ", \"state\": " + String(ch5_state) + ", \"label\":\"" + ch5_label + "\" },\n";
+  //    data += "        \"6\": { \"pin\": " + String(ch6_pin) + ", \"state\": " + String(ch6_state) + ", \"label\":\"" + ch6_label + "\" },\n";
+  //    data += "        \"7\": { \"pin\": " + String(ch7_pin) + ", \"state\": " + String(ch7_state) + ", \"label\":\"" + ch7_label + "\" },\n";
+  //    data += "        \"8\": { \"pin\": " + String(ch8_pin) + ", \"state\": " + String(ch8_state) + ", \"label\":\"" + ch8_label + "\" }\n";
+  //    data += "      }\n";
+  //
+  //    data += "    }\n";
+  //    data += "  ]\n";
+  //  }
+
+  data += "\n}\n";
   return data;
 
 }
+
+
+#include "FS.h"
+#include "leaflift_filesystem.h"
+
+
 
 #include "leaflift_ph.h"
 
@@ -644,10 +701,10 @@ void readTemperatureSensors() {
   }
   celsius = (float)raw / 16.0;
   fahrenheit = celsius * 1.8 + 32.0;
-  
+
   currentFarenheight = fahrenheit;
 
-  
+
   Serial.print("  Temperature = ");
   Serial.print(celsius);
   Serial.print(" Celsius, ");
@@ -655,16 +712,16 @@ void readTemperatureSensors() {
   Serial.println(" Fahrenheit");
 
 
-  if( temp_c != (double)celsius ){
-   temp_c = (double)celsius;
+  if ( temp_c != (double)celsius ) {
+    temp_c = (double)celsius;
 
     // HACK: since the ph Sensor reports the probe temp, we only want to report if it's not enabled
-    if( !_phSensorEnabled ){
-      recordValue( "environment", "probe_temp_f", String( fahrenheit ), _hostname );  
+    if ( !_phSensorEnabled ) {
+      recordValue( "environment", "probe_temp_f", String( fahrenheit ), _hostname );
     }
   }
-  
-  
+
+
 }
 
 
@@ -739,17 +796,42 @@ Task tSensor( 10000, TASK_FOREVER, &SensorCallback, &sensorScheduler, true);
 
 int report_interval = 10 * 60 * 1000;
 Task tReportSensorData( report_interval, TASK_FOREVER, &ReportSensorData, &sensorScheduler, true);
+int displayStepCount = 0;
+int displayPhase = 0;
 
 void CycleCallback() {
   n++;
+
+  
+  displayStepCount++;
+  
+  switch( displayPhase ){
+    default:
+    case( 0 ): // regular display
+      if( displayStepCount >= 60 )
+      {
+         displayStepCount = 0;
+         displayPhase =1;
+      }
+    break;
+    case( 1 ):  // screen save
+      if( displayStepCount >= 10 )
+      {
+        displayStepCount = 0;
+         displayPhase =0;
+      }
+
+    break;
+  }
+  
   if (n > 255) n = 0;
   renderDisplay();
 }
 
-void ReportSensorData(){
+void ReportSensorData() {
 
   apiPOST( "/v1/record/sensordata", getJSONData("") );
-    
+
 }
 
 void SensorCallback() {
@@ -775,10 +857,10 @@ void SensorCallback() {
   }
   if ( hasDevice( 72 ) ) {
     readADS1X15();
-    
+
   }
 
-  
+
 }
 
 
@@ -791,10 +873,14 @@ bool hasDevice( int address ) {
 }
 void setup() {
 
-  configureHostname();
 
   Serial.begin( 115200 );
   Serial.println( "Starting" );
+
+
+  //setupFilesystem();
+
+  configureHostname();
   scanI2C();
 
   if ( hasDevice( 60 ) ) {
@@ -817,7 +903,7 @@ void setup() {
   if ( hasDevice( 72 ) ) {
     Serial.println("[ADS1115] Analog Sensors found 0x48 [72]");
     setupADS1X15();
-    
+
   }
 
   if ( hasDevice( 99 ) ) {
@@ -859,7 +945,7 @@ void setup() {
   getTime();
 
   apiPOST( "/v1/record/nodeconfig", getJSONStatus() );
-  
+
   //postValue( "system", "status", "ready" );
   //recordValue( "system", "status", "ready", _hostname );
 }
@@ -899,7 +985,33 @@ ESP_SSD1306 display(OLED_RESET);
 #include "leaflift_images.h"
 
 void renderDisplay() {
+
   if ( _renderDisplayEnabled == false ) return;
+
+//  if( displayPhase == 1 ){
+//    display.clearDisplay();
+//    display.drawBitmap(0, 0, launchScreen, 128, 128, WHITE );
+//    display.display();
+//    return;
+//  }
+  
+  if ( _hostname == "aqua" ) {
+    // use a predefined util screen
+    display.clearDisplay();
+    display.setTextColor(WHITE);
+    display.setTextSize(2);
+
+    display.setCursor(2, 10);
+    display.println( "pH " + String(ph_value_double) + "" );
+
+    display.setCursor(2, 30);
+    display.println( "" + String( currentFarenheight ) + "'F" );
+
+    display.display();
+
+    return;
+  }
+
   display.clearDisplay();
   display.setTextColor(WHITE);
   display.setCursor(0, 20);
@@ -918,7 +1030,7 @@ void renderDisplay() {
   display.setTextSize(1);
   display.println( "CORE: " + String( VERSION ) );
   display.println( "HOST: " + String( _hostname ) );
-  //display.println( "WiFi: " + String( ssid ) );
+  display.println( "WiFi: " + String( ssid ) );
   display.println( "  IP: " + String( ipAddressString ) );
 
   int mt = (int)_tickCount / 60;
@@ -931,13 +1043,14 @@ void renderDisplay() {
   String seconds = (s < 10 ? "0" : "") + String( s );
   uptime_string = hours + ":" + minutes + ":" + seconds;
 
-  if ( _uptime_display ) display.println( "  UP: " + uptime_string );
+  //if ( _uptime_display ) display.println( "  UP: " + uptime_string );
 
-  display.println( " I2C: " + String(  get_i2cString() ) );
+  //display.println( " I2C: " + String(  get_i2cString() ) );
 
   if (haveIOChip) {
-    display.println( " I/O: MCP23017" );
+    //display.println( " I/O: MCP23017" );
     //renderIOInterface();
+    renderButtonInterface();
   }
   if ( _enableTempProbes ) {
     //display.println( "Temp: " + String( temp_c ) + "'C" );
@@ -952,7 +1065,7 @@ void renderDisplay() {
   if ( _dhtSensorEnabled ) {
     display.println( "Humidity: " + String( dht_humidity ) + "%" );
   }
-  
+
   if ( _flowCounterEnabled ) {
     display.println( " LPH: " + String( litersPerHour ) + "" );
   }
@@ -964,9 +1077,9 @@ void renderDisplay() {
     //display.clearDisplay();
     display.drawBitmap(110, 0, bluetoothIcon, 16, 16, WHITE );
   }
-  if (_enableOTAUpdate) {
-    display.drawBitmap(96, 48, otaIcon, 32, 16, WHITE );
-  }
+  //  if (_enableOTAUpdate) {
+  //    display.drawBitmap(96, 48, otaIcon, 32, 16, WHITE );
+  //  }
   //if ( hasDevice( 57 ) ) {
   if ( _luxSensorEnabled ) {
     display.println( " LUX: " + String( _lastLUXReading ) + "" );
@@ -992,7 +1105,7 @@ void drawGPIOPin(int pinNum, int state, int x, int y) {
   display.println( String(pinNum) );
 }
 void renderIOInterface() {
-  return;
+  //return;
   for ( int n = 0; n < 8; n++) {
     int state = 1;
     if ( random(1, 10) > 5 ) {
@@ -1004,55 +1117,54 @@ void renderIOInterface() {
   }
 }
 
+
 void renderButtonInterface() {
 
   display.setCursor(0, 50);
   display.setTextSize(2);
 
-  if ( switch4 ) {
+  if ( buttonstates[0] == HIGH ) {
     display.setTextColor(BLACK, WHITE); // 'inverted' text
   } else {
     display.setTextColor(WHITE);
   }
   //display.println( "" + String( switch4?"1":"0") +"" );
-  display.println( "4" );
+  display.println( "1" );
+
+
 
   display.setCursor(40, 50);
   display.setTextSize(2);
 
-  if ( switch3 ) {
+  if ( buttonstates[1] == HIGH ) {
     display.setTextColor(BLACK, WHITE); // 'inverted' text
   } else {
     display.setTextColor(WHITE);
   }
   //display.println( "" + String( switch3?"1":"0") +"" );
-  display.println( "3" );
+  display.println( "2" );
 
   display.setCursor(75, 50);
   display.setTextSize(2);
-  if ( switch1 ) {
+  if ( buttonstates[2] == HIGH ) {
     display.setTextColor(BLACK, WHITE); // 'inverted' text
   } else {
     display.setTextColor(WHITE);
   }
   //display.println( "" + String( switch1?"1":"0") +"" );
-  display.println( "1" );
+  display.println( "3" );
 
   display.setCursor(110, 50);
   display.setTextSize(2);
-  if ( switch2 ) {
+  if ( buttonstates[3] == HIGH ) {
     display.setTextColor(BLACK, WHITE); // 'inverted' text
   } else {
     display.setTextColor(WHITE);
   }
-  display.println( "2" );
+  display.println( "4" );
   //display.println( "" + String( switch2?"1":"0") +"" );
-
-
-
-
-
 }
+
 
 
 void addTextToDisplay( String txt ) {
@@ -1066,24 +1178,29 @@ void displayTextOnDisplay( String txt )
   updateDisplay();
 }
 void updateDisplay() {
+
   display.clearDisplay();
   display.setTextColor(WHITE);
   display.setCursor(0, 0);
   display.setTextSize(1);
   display.println( String( currentDisplayText ) );
   display.display();
+
 }
 
 void initDisplay()
 {
+  _showBootScreen = true;
   // SSD1306 Init
   display.begin(SSD1306_SWITCHCAPVCC);  // Switch OLED
   display.clearDisplay();
-  display.drawBitmap(0, 0, launchScreen, 128, 128, WHITE );
-  display.display();
-  delay( 3 * 1000 );
-  display.clearDisplay();
-
+  if( _showBootScreen ){
+    display.drawBitmap(0, 0, launchScreen, 128, 128, WHITE );
+    display.display();
+    delay( 10  * 1000 );
+    display.clearDisplay();
+  }
+  
   if ( TEST_MODE ) {
     updateDisplay();
     for ( int n = 0; n < 10; n++) {
@@ -1095,33 +1212,6 @@ void initDisplay()
 
 bool buttonADown = false;
 int buttonAState = 0;
-
-int buttondownstates[] = {false, false, false, false};
-int buttonstates[] = {LOW, LOW, LOW, LOW};
-
-int buttonPins[] = {8, 9, 10, 11};
-int ledPins[] = {4, 5, 6, 7};
-
-void handleButtons() {
-
-  for ( int n = 0; n < 4; n++ ) {
-    int state = mcp.digitalRead(buttonPins[n]);
-
-    if ( LOW == state ) {
-      Serial.println("Button[" + String(n) + "] DOWN");
-      buttondownstates[n] = true;
-    } else {
-
-      // UP
-      if ( buttondownstates[n] == true ) {
-        Serial.println("Button[" + String(n) + "] UP");
-        // toggle
-        buttonstates[n] = !buttonstates[n];
-      }
-    }
-    mcp.digitalWrite( ledPins[n], buttonstates[n] );
-  }
-}
 
 Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT, 12345);
 
@@ -1188,7 +1278,7 @@ void loop() {
 
 
 
-  //handleButtons();
+  if ( _buttonBoardConnected ) handleButtons();
   //
   //  if ( buttonAState == 0 ) {
   //    if ( buttonADown ) {
