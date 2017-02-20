@@ -25,8 +25,6 @@ void readDHTSensor() {
   float h = dht.readHumidity();
   // Read temperature as Fahrenheit (isFahrenheit = true)
   float f = dht.readTemperature(true);
-
-  dht_temp_f = f;
   
   //delay( 2000 );
 
@@ -42,12 +40,14 @@ void readDHTSensor() {
 
     if ( h != dht_humidity ) {
       dht_humidity = h;
+      Serial.println("dhtHumidity: " + String(dht_humidity));
       recordValue( "environemnt", "dht_humidity", String( dht_humidity ), _hostname );
     }
 
-    if ( h != dht_humidity ) {
+    if ( f != dht_temp_f ) {
       dht_temp_f = f;
-      recordValue( "environemnt", "dht_temp_f", String( dht_temp_f ), _hostname );
+       Serial.println("dhtTemp: " + String(dht_temp_f));
+     recordValue( "environemnt", "dht_temp_f", String( dht_temp_f ), _hostname );
     }
   }
 

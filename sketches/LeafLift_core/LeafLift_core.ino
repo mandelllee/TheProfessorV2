@@ -6,11 +6,11 @@
 //     \_____/\___|\__,_|_|   \_____/_|_|  \__|
 //
 //     Arduino-Core
-//
+//          SCL    SDA (some are reversed)
 //          I2C    I2C   1WIRE
 //          SDA    SCL   Temp   DHT                           Rx2   Tx2   Rx0   Tx0
 //    16  : 5    : 4   : 0    : 722   : 3v  : GND : 14  : 12  : 13  : 15  : 3   : 1   : GND : 3v  :
-//  |--------------------------------------------------------------------------------------------| 
+//  |--------------------------------------------------------------------------------------------|
 //  |                                                                                            |
 //  |                                                                                            |
 //  |__________________                                                                          |
@@ -29,16 +29,16 @@
 //
 //
 //        I2C   I2C
-//   NC : SDA : SCL : GND : 3v : 7  : 6  : 5  : 4  : 3  : 2  : 1  : 0  
-//  ----------------------------------------------------------------------------------- 
+//   NC : SDA : SCL : GND : 3v : 7  : 6  : 5  : 4  : 3  : 2  : 1  : 0
+//  -----------------------------------------------------------------------------------
 //  |                                                                                 |
 //  |                                                                                 |
-//  |                                                                                / 
-//  |                            MCP23017                                           | 
+//  |                                                                                /
+//  |                            MCP23017                                           |
 //  |                                                                                \ 
 //  |                                                                                 |
 //  |                                                                                 |
-//  ----------------------------------------------------------------------------------- 
+//  -----------------------------------------------------------------------------------
 //   A0 : A1 : A3 : RST : INTB : INTA : 0    : 1    : 2    : 3    : 4   : 5   : 6   : 7
 //                  10KΩ                Light  Pump   Drain Doser   AC1   AC2   AC3   Ac4
 //   GND  GND  GND  GND
@@ -84,10 +84,10 @@ Scheduler sensorScheduler;
 #include "leaflift_switches.h"
 
 
-String API_HOST = "api-quadroponic.rhcloud.com";
-int API_PORT = 80;
-//char API_HOST[] = "10.5.1.25";
-//int API_PORT = 3000;
+//String API_HOST = "api-quadroponic.rhcloud.com";
+//int API_PORT = 80;
+char API_HOST[] = "192.168.1.88";
+int API_PORT = 3000;
 
 bool SEND_DATA_TO_API = true;
 int SEND_DATA_INTERVAL = 10000;
@@ -132,9 +132,12 @@ Adafruit_MCP23017 mcp;
 
 
 #include "leaflift_ADS1X15.h"
+#include "leaflift_mqtt.h"
 
-const char* ssid     = "gbsx";
-const char* password = "OrlandoNakazawa!";
+
+
+const char* ssid     = "Leaflift_EXT";
+const char* password = "leemandell";
 String ipAddressString = "";
 ESP8266WebServer server(80);
 
@@ -175,7 +178,7 @@ void TickCallback() {
   }
 
 
-  if( _flowCounterEnabled ){
+  if ( _flowCounterEnabled ) {
     flowCounterHandler();
   }
   _now++;
@@ -381,15 +384,26 @@ void testSwitches() {
 
   for (int n = 0; n < 8; n++) {
     mcp.digitalWrite( n, HIGH );
+    Serial.print("Switch : ");
+    Serial.print(n);
+    Serial.println(" initial HIGH");
   }
 
   for (int n = 0; n < 8; n++) {
     addTextToDisplay( "MCP[" + String(n) + "]\n" );
     mcp.digitalWrite( n, LOW );
+    Serial.print("Switch : ");
+    Serial.print(n);
+    Serial.println(" second LOW");
     delay( 2000 );
     mcp.digitalWrite( n, HIGH );
+    Serial.print("Switch : ");
+    Serial.print(n);
+    Serial.println(" second HIGH");
     //delay( 2000 );
   }
+  server.send(200, "text/plain", "Switch test complete" );
+
 }
 #include "leaflift_bluetooth.h"
 
@@ -460,7 +474,7 @@ String getJSONStatus( String msg )
   data += ",\n  \"dht_sensor\": \"" + String( _dhtSensorEnabled ? "1" : "0") + "\"";
   data += ",\n  \"soil\": \"" + String( _soilSensorEnabled ? "1" : "0") + "\"";
   data += ",\n  \"soil_sensor\": \"" + String( _soilSensorEnabled ? "1" : "0") + "\"";
- data += ",\n  \"CO2_sensor\": \"" + String( _CO2SensorEnabled ? "1" : "0") + "\"";
+  data += ",\n  \"CO2_sensor\": \"" + String( _CO2SensorEnabled ? "1" : "0") + "\"";
 
   if ( msg.length() > 0) data += ",\n  \"msg\": \"" + msg + "\"";
   data += "\n}";
@@ -490,14 +504,14 @@ String getJSONData( String msg )
   if ( _enableTempProbes ) {
     data += ",\n    \"probes\": {";
     String probeid = "avg";
-    data += "\n      \""+probeid+"\": { \"temp_c\": " + String(temp_c) + " }";
+    data += "\n      \"" + probeid + "\": { \"temp_c\": " + String(temp_c) + " }";
     //data += ",\n    \"temp_c\": " + String(temp_c) + "";
 
     data += "\n    }";
   }
 
 
-  if( _flowCounterEnabled ){
+  if ( _flowCounterEnabled ) {
 
     data += ",\n    \"flow\": {";
     data += "\n      \"pin\": \"" + String( flowPin1 ) + "\"";
@@ -659,10 +673,10 @@ void readTemperatureSensors() {
   }
   celsius = (float)raw / 16.0;
   fahrenheit = celsius * 1.8 + 32.0;
-  
+
   currentFarenheight = fahrenheit;
 
-  
+
   Serial.print("  Temperature = ");
   Serial.print(celsius);
   Serial.print(" Celsius, ");
@@ -670,16 +684,16 @@ void readTemperatureSensors() {
   Serial.println(" Fahrenheit");
 
 
-  if( temp_c != (double)celsius ){
-   temp_c = (double)celsius;
+  if ( temp_c != (double)celsius ) {
+    temp_c = (double)celsius;
 
     // HACK: since the ph Sensor reports the probe temp, we only want to report if it's not enabled
-    if( !_phSensorEnabled ){
-      recordValue( "environment", "probe_temp_f", String( fahrenheit ), _hostname );  
+    if ( !_phSensorEnabled ) {
+      recordValue( "environment", "probe_temp_f", String( fahrenheit ), _hostname );
     }
   }
-  
-  
+
+
 }
 
 
@@ -753,9 +767,9 @@ Task tCycle( 1000, TASK_FOREVER, &CycleCallback, &ts, true);
 Task tSensor( 10000, TASK_FOREVER, &SensorCallback, &sensorScheduler, true);
 
 int reportingIntervalMinutes = 10;
-int report_interval = reportingIntervalMinutes * 60 * 1000;
+//int report_interval = reportingIntervalMinutes * 60 * 1000;
 
-//int report_interval = 15 * 1000;
+int report_interval = 5 * 1000;
 Task tReportSensorData( report_interval, TASK_FOREVER, &ReportSensorData, &sensorScheduler, true);
 
 #include "leaflift_server.h"
@@ -766,14 +780,27 @@ void CycleCallback() {
   renderDisplay();
 }
 
-void ReportSensorData(){
+void ReportSensorData() {
 
   apiPOST( "/v1/record/sensordata", getJSONData("") );
-    
+
+//    char jsonStr[300];
+//    String jsonData = getJSONData("");
+//    jsonData.toCharArray(jsonStr,jsonData.length() + 1);
+//    
+//  if (!mqttClient.connected()) {
+//    mqttReconnect();
+//   
+//    mqttClient.publish("leaflift/sensorjson",jsonStr);
+////    mqttClient.publish("leaflift/sensorjson","json");
+//        Serial.println("String jsonstring: " + String(jsonStr));
+// }
+
+
 }
+char message_buff[100];
 
 void SensorCallback() {
-
   n++;
   if (n > 255) n = 0;
 
@@ -783,7 +810,15 @@ void SensorCallback() {
     readPhSensor();
   }
   if ( hasDevice( 57 ) ) {
+    
     readLUXSensor();
+//       String pubString = String(_lastLUXReading);
+//        pubString.toCharArray(message_buff, pubString.length()+1);
+//        Serial.println("String to publish: " + pubString);
+// if (!mqttClient.connected()) {
+//    mqttReconnect();
+//      mqttClient.publish("leaflift/lux", message_buff);
+// }
   }
 
   //if ( hasDevice( 119 ) ) {
@@ -792,10 +827,24 @@ void SensorCallback() {
   }
   if (_dhtSensorEnabled ) {
     readDHTSensor();
+
+
+    
+    String pubString = String(dht_temp_f);
+    pubString.toCharArray(message_buff, pubString.length()+1);
+ if (!mqttClient.connected()) {
+    mqttReconnect();
+ }
+ Serial.println("MQTT publish dht temp: " + pubString);
+    mqttClient.publish("leaflift/dhtTemp", message_buff);
+      pubString = String(dht_humidity);
+    pubString.toCharArray(message_buff, pubString.length()+1);
+ Serial.println("MQTT publish dht humisty: " + pubString);
+mqttClient.publish("leaflift/dhtHumidity", message_buff);
   }
   if ( hasDevice( 72 ) ) {
     readADS1X15();
-    
+
   }
 
   if (_ECSensorEnabled) {
@@ -805,7 +854,7 @@ void SensorCallback() {
   if (_CO2SensorEnabled) {
     readCO2Sensor();
   }
-  
+
 }
 
 
@@ -816,6 +865,8 @@ bool hasDevice( int address ) {
   }
   return false;
 }
+
+
 void setup() {
 
   configureHostname();
@@ -844,14 +895,14 @@ void setup() {
   if ( hasDevice( 72 ) ) {
     Serial.println("[ADS1115] Analog Sensors found 0x48 [72]");
     setupADS1X15();
-    
+
   }
 
   if ( hasDevice( 99 ) ) {
     Serial.println("Altas pH Sensor found [99]");
   }
 
- if ( hasDevice( 77 ) ) {
+  if ( hasDevice( 77 ) ) {
     Serial.println("CO2 Sensor found [77]");
     setupCO2Sensor();
   }
@@ -895,9 +946,11 @@ void setup() {
   getTime();
 
   apiPOST( "/v1/record/nodeconfig", getJSONStatus() );
-  
+
   //postValue( "system", "status", "ready" );
   //recordValue( "system", "status", "ready", _hostname );
+
+  mqttSetup();
 }
 
 
@@ -989,7 +1042,7 @@ void renderDisplay() {
     display.println( "Humidity: " + String( dht_humidity ) + "%" );
     display.println( "Temp: " + String( dht_temp_f ) + "F" );
   }
-  
+
   if ( _flowCounterEnabled ) {
     display.println( " LPH: " + String( litersPerHour ) + "" );
   }
@@ -1012,8 +1065,8 @@ void renderDisplay() {
     display.println( "Temp: " + String( _lastTempF ) + "F" );
   }
 
-  if(_CO2SensorEnabled) {
-     display.println( "CO2: " + String( CO2Concentration ) + "ppm" );
+  if (_CO2SensorEnabled) {
+    display.println( "CO2: " + String( CO2Concentration ) + "ppm" );
   }
 
 
@@ -1179,14 +1232,14 @@ void setupLUXSensor() {
   }
 
   /* You can also manually set the gain or enable auto-gain support */
-  // tsl.setGain(TSL2561_GAIN_1X);      /* No gain ... use in bright light to avoid sensor saturation */
+  tsl.setGain(TSL2561_GAIN_1X);      /* No gain ... use in bright light to avoid sensor saturation */
   // tsl.setGain(TSL2561_GAIN_16X);     /* 16x gain ... use in low light to boost sensitivity */
-  tsl.enableAutoRange(true);            /* Auto-gain ... switches automatically between 1x and 16x */
+  //tsl.enableAutoRange(true);            /* Auto-gain ... switches automatically between 1x and 16x */
 
   /* Changing the integration time gives you better sensor resolution (402ms = 16-bit data) */
-  tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_13MS);      /* fast but low resolution */
+  //  tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_13MS);      /* fast but low resolution */
   // tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_101MS);  /* medium resolution and speed   */
-  // tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_402MS);  /* 16-bit data but slowest conversions */
+  tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_402MS);  /* 16-bit data but slowest conversions */
 
   /* Update these values depending on what you've set above! */
   Serial.println("------------------------------------");
@@ -1220,6 +1273,8 @@ void readLUXSensor() {
   }
 
 }
+
+
 void loop() {
 
   //printDebug("Loop");
@@ -1260,5 +1315,11 @@ void loop() {
   server.handleClient();
 
   ArduinoOTA.handle();
+
+//  if (!mqttClient.connected()) {
+//    mqttReconnect();
+//  }
+  mqttClient.loop();
+
 }
 

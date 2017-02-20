@@ -108,15 +108,15 @@ void configureHostname() {
     _BMP085Enabled = true;
 
   } else if ( chip_id == "13382103" ) {
-    _hostname = "piruWest";
+    _hostname = "piruGreenhouseEnvironment";
     _soilSensorEnabled = false;
     _phSensorEnabled = false;
     _enableTempProbes = false;
     _dhtSensorEnabled = true;
     _luxSensorEnabled = true;
     _ECSensorEnabled = false;
-    _BMP085Enabled = false;
-    _CO2SensorEnabled = true;
+    _BMP085Enabled = true;
+    _CO2SensorEnabled = false;
 
   } else if ( chip_id == "13382423" ) {
 
@@ -126,6 +126,10 @@ void configureHostname() {
 
   } else if ( chip_id == "12601523" ) {
     _hostname = "pirupower";
+    _useIOForSwitchChannels = true;
+   _dhtSensorEnabled = true;
+     ch1_label = "Desk Lamp";
+    ch1_pin = 0;
 
 
   } else if ( chip_id == "1555028" ) {

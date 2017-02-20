@@ -134,45 +134,56 @@ void setupHTTPServer() {
   //TODO: handle hostname
 
   server.on("/switch/0/0", []() {
-    server.send(200, "text/plain", "1" );
     Serial.println("Setting switch [0] 0 ");
     mcp.digitalWrite( 0, HIGH );
+   server.send(200, "text/plain", "Setting switch [0] 0" );
   });
   server.on("/switch/0/1", []() {
-    server.send(200, "text/plain", "1" );
     Serial.println("Setting switch [0] 1 ");
     mcp.digitalWrite( 0, LOW );
-  });
+     server.send(200, "text/plain", "Setting switch [0] 1" );
+ });
 
   server.on("/switch/1/0", []() {
-    server.send(200, "text/plain", "1" );
+    server.send(200, "text/plain", "Setting switch [1] 0" );
     Serial.println("Setting switch [1] 0 ");
     mcp.digitalWrite( 1, HIGH );
   });
   server.on("/switch/1/1", []() {
-    server.send(200, "text/plain", "1" );
+    server.send(200, "text/plain", "Setting switch [1] 1" );
     Serial.println("Setting switch [1] 1 ");
     mcp.digitalWrite( 1, LOW );
   });
 
   server.on("/switch/2/0", []() {
-    server.send(200, "text/plain", "1" );
+    server.send(200, "text/plain", "Setting switch [2] 0" );
     Serial.println("Setting switch [2] 0 ");
     mcp.digitalWrite( 2, HIGH );
+    if (!mqttClient.connected()) {
+    mqttReconnect();
+ }
+ Serial.println("MQTT publish switch 2: ON");
+    mqttClient.publish("leaflift/greenhouse_exhaust_fan", "0");
+
   });
   server.on("/switch/2/1", []() {
-    server.send(200, "text/plain", "1" );
+    server.send(200, "text/plain", "Setting switch [2] 1" );
     Serial.println("Setting switch [2] 1 ");
     mcp.digitalWrite( 2, LOW );
-  });
+    if (!mqttClient.connected()) {
+    mqttReconnect();
+ }
+ Serial.println("MQTT publish switch 2: OFF");
+    mqttClient.publish("leaflift/greenhouse_exhaust_fan", "1");
+ });
 
   server.on("/switch/3/0", []() {
-    server.send(200, "text/plain", "1" );
+    server.send(200, "text/plain", "Setting switch [3] 0" );
     Serial.println("Setting switch [3] 0 ");
     mcp.digitalWrite( 3, HIGH );
   });
   server.on("/switch/3/1", []() {
-    server.send(200, "text/plain", "1" );
+    server.send(200, "text/plain", "Setting switch [3] 1" );
     Serial.println("Setting switch [3] 1 ");
     mcp.digitalWrite( 3, LOW );
   });
@@ -183,12 +194,12 @@ void setupHTTPServer() {
 
 
   server.on("/switch/4/0", []() {
-    server.send(200, "text/plain", "1" );
+    server.send(200, "text/plain", "Setting switch [4] 0" );
     Serial.println("Setting switch [4] 0 ");
     mcp.digitalWrite( 4, HIGH );
   });
   server.on("/switch/4/1", []() {
-    server.send(200, "text/plain", "1" );
+    server.send(200, "text/plain", "Setting switch [4] 1" );
     Serial.println("Setting switch [4] 1 ");
     mcp.digitalWrite( 4, LOW );
   });
@@ -205,25 +216,29 @@ void setupHTTPServer() {
   });
 
   server.on("/switch/6/0", []() {
-    server.send(200, "text/plain", "1" );
+    server.send(200, "text/plain", "Setting switch [6] 0" );
     Serial.println("Setting switch [6] 0 ");
     mcp.digitalWrite( 6, HIGH );
   });
   server.on("/switch/6/1", []() {
-    server.send(200, "text/plain", "1" );
+    server.send(200, "text/plain", "Setting switch [6] 1" );
     Serial.println("Setting switch [6] 1 ");
     mcp.digitalWrite( 6, LOW );
   });
 
   server.on("/switch/7/0", []() {
-    server.send(200, "text/plain", "1" );
+    server.send(200, "text/plain", "Setting switch [7] 0" );
     Serial.println("Setting switch [7] 0 ");
     mcp.digitalWrite( 7, HIGH );
   });
   server.on("/switch/7/1", []() {
-    server.send(200, "text/plain", "1" );
+    server.send(200, "text/plain", "Setting switch [7] 1" );
     Serial.println("Setting switch [7] 1 ");
     mcp.digitalWrite( 7, LOW );
+  });
+
+  server.on("/switches/test", []() {
+    testSwitches();
   });
 
 
