@@ -47,13 +47,25 @@
 //   GND  GND  GND   V+
 //   (I2C Addr 32)
 
-String VERSION = "0.0-blake";
+String VERSION = "0.0-redish";
 
 String BOARD_ID = "";
 bool _buttonBoardConnected = false;
 bool TEST_MODE = false;
 String chip_id = "";
 String _hostname = "";
+
+
+
+
+int _lastTempC;
+int _lastTempF;
+int _lastAltitude;
+int _lastPressure;
+
+
+
+
 
 int dry_calibration[] = {0, 0, 0, 0};
 int wet_calibration[] = {0, 0, 0, 0};
@@ -65,6 +77,7 @@ int _now = 0;
 
  **/
 
+bool _enableTempProbes = false;
 
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
@@ -89,12 +102,11 @@ Scheduler sensorScheduler;
 #include "Adafruit_MCP23017.h"
 Adafruit_MCP23017 mcp;
 
-#include "leaflift_switches.h"
 
 
+bool recentSensorErrors = false;
 
-
-String API_HOST = "api-quadroponic.rhcloud.com";
+String API_HOST = "10.5.1.160";
 int API_PORT = 80;
 //char API_HOST[] = "10.5.1.25";
 //int API_PORT = 3000;
@@ -167,6 +179,9 @@ String promptText;
 double promptLength = 0.00;
 
 #include "leaflift_api.h"
+
+#include "leaflift_switches.h"
+
 
 
 unsigned long _tickCount = 0;
@@ -274,17 +289,10 @@ void setupBMP085Sensor() {
     while (1) {}
   }
 }
-int _lastTempC;
-int _lastTempF;
-int _lastAltitude;
-int _lastPressure;
 
 double _currentFarenheightEnv = 0.00;
 void readBMP085Sensor() {
 
-  Serial.print("Temperature = ");
-  Serial.print(bmp.readTemperature());
-  Serial.println(" *C");
   _lastTempC = bmp.readTemperature();
 
   int newVal = (_lastTempC * 1.8) + 32;
@@ -297,7 +305,6 @@ void readBMP085Sensor() {
   Serial.print("Pressure = ");
   Serial.print( String(_lastPressure) );
   Serial.println(" Pa");
-
 
   _lastAltitude = bmp.readAltitude();
 
@@ -331,40 +338,40 @@ void setupIO() {
 
   //mcp.pinMode(6, OUTPUT);
 
-  mcp.pinMode(0, OUTPUT);
-  mcp.pinMode(1, OUTPUT);
-  mcp.pinMode(2, OUTPUT);
-  mcp.pinMode(3, OUTPUT);
-  mcp.digitalWrite(0, HIGH);
-  mcp.digitalWrite(1, HIGH);
-  mcp.digitalWrite(2, HIGH);
-  mcp.digitalWrite(3, HIGH);
+//  mcp.pinMode(0, OUTPUT);
+//  mcp.pinMode(1, OUTPUT);
+//  mcp.pinMode(2, OUTPUT);
+//  mcp.pinMode(3, OUTPUT);
+//  mcp.digitalWrite(0, HIGH);
+//  mcp.digitalWrite(1, HIGH);
+//  mcp.digitalWrite(2, HIGH);
+//  mcp.digitalWrite(3, HIGH);
+//
+//  mcp.pinMode(4, OUTPUT);
+//  mcp.pinMode(5, OUTPUT);
+//  mcp.pinMode(6, OUTPUT);
+//  mcp.pinMode(7, OUTPUT);
+//
+//  mcp.digitalWrite(4, HIGH);
+//  mcp.digitalWrite(5, HIGH);
+//  mcp.digitalWrite(6, HIGH);
+//  mcp.digitalWrite(7, HIGH);
+//
+//
+//  mcp.pinMode(8, INPUT);
+//  mcp.pinMode(9, INPUT);
+//  mcp.pinMode(10, INPUT);
+//  mcp.pinMode(11, INPUT);
+//  mcp.pinMode(12, OUTPUT);
+//  mcp.pinMode(13, OUTPUT);
+//  mcp.pinMode(14, OUTPUT);
+//  mcp.pinMode(15, OUTPUT);
+//  mcp.pullUp(8, HIGH);
+//  mcp.pullUp(9, HIGH);
+//  mcp.pullUp(10, HIGH);
+//  mcp.pullUp(11, HIGH);
 
-  mcp.pinMode(4, OUTPUT);
-  mcp.pinMode(5, OUTPUT);
-  mcp.pinMode(6, OUTPUT);
-  mcp.pinMode(7, OUTPUT);
-
-  mcp.digitalWrite(4, HIGH);
-  mcp.digitalWrite(5, HIGH);
-  mcp.digitalWrite(6, HIGH);
-  mcp.digitalWrite(7, HIGH);
-
-
-  mcp.pinMode(8, INPUT);
-  mcp.pinMode(9, INPUT);
-  mcp.pinMode(10, INPUT);
-  mcp.pinMode(11, INPUT);
-  mcp.pinMode(12, OUTPUT);
-  mcp.pinMode(13, OUTPUT);
-  mcp.pinMode(14, OUTPUT);
-  mcp.pinMode(15, OUTPUT);
-  mcp.pullUp(8, HIGH);
-  mcp.pullUp(9, HIGH);
-  mcp.pullUp(10, HIGH);
-  mcp.pullUp(11, HIGH);
-
-  if ( TEST_MODE ) testSwitches();
+  //if ( TEST_MODE ) testSwitches();
 
   //  delay(200);
   //  mcp.digitalWrite(1, LOW);
@@ -479,6 +486,10 @@ String getJSONStatus( String msg )
   data += ",\n  \"soil\": \"" + String( _soilSensorEnabled ? "1" : "0") + "\"";
   data += ",\n  \"soil_sensor\": \"" + String( _soilSensorEnabled ? "1" : "0") + "\"";
 
+
+  //data += ",\n  \"channels\":\n" + String( getChannelStatusJSON() ) + "\n";
+  data += ",\n" + getChannelsNode();
+
   if ( msg.length() > 0) data += ",\n  \"msg\": \"" + msg + "\"";
   data += "\n}";
   return data;
@@ -491,88 +502,123 @@ String getJSONData( String msg )
 
   String data =  "{\n";
 
+  // always have a first entry, that way all next ones prefix a comma
+  //data += "  \"uid\": \"000000\"";
+
   data += "  \"hostname\":\"" + _hostname + "\"";
   data += ",\n  \"core_version\":\"" + VERSION + "\"";
   if ( msg.length() > 0) data += ",\n  \"msg\": \"" + msg + "\"";
   data += ",\n";
 
   data += "  \"now\":\"" + String(_now) + "\",\n";
-  data += "  \"sensors\": {";
-
-  // always have a first entry, that way all next ones prefix a comma
-  data += "\n    \"uid\": \"000000\"";
-
-  if ( _phSensorEnabled ) data += ",\n    \"ph\": \"" + String(ph_value_double) + "\"";
-
-  if ( _enableTempProbes ) {
-    data += ",\n    \"probes\": {";
-    String probeid = "avg";
-    data += "\n      \"" + probeid + "\": { \"temp_c\": \"" + String(temp_c) + "\" }";
-    //data += ",\n    \"temp_c\": \"" + String(temp_c) + "\"";
-
-    data += "\n    }";
-  }
 
 
-  if ( _flowCounterEnabled ) {
+  data += "  \"environment\": {";
 
-    data += ",\n    \"flow\": {";
-    data += "\n      \"pin\": \"" + String( flowPin1 ) + "\"";
-    data += ",\n      \"count\": \"" + String( flowCounter ) + "\"";
-    data += ",\n      \"lpm\": \"" + String( _lastLPM ) + "\"";
-    data += ",\n      \"lph\": \"" + String( litersPerHour ) + "\"";
-    data += "\n    }";
-  }
-
+  data += "\n    \"light\": {";
   if ( _luxSensorEnabled ) {
-    data += ",\n    \"tsl2561\": {";
-    data += "\n      \"lux\": \"" + String( _lastLUXReading ) + "\"";
-    data += "\n    }";
+    data += "\n      \"lux\": " + String( _lastLUXReading ) + "";
   }
-  if ( _BMP085Enabled ) {
-    data += ",\n    \"bmp085\": {";
-    data += "\n      \"temp_c\": \"" + String( _lastTempC ) + "\"";
-    data += ",\n      \"temp_f\": \"" + String( _lastTempF ) + "\"";
-    data += ",\n      \"altitude\": \"" + String( _lastAltitude ) + "\"";
-    data += ",\n      \"pressure\": \"" + String( _lastPressure ) + "\"";
-    data += "\n    }";
-  }
+  data += "\n    }";
+
   if ( _dhtSensorEnabled ) {
-    data += ",\n    \"dht11\": {";
-    data += "\n      \"dht_temp_f\": \"" + String( dht_temp_f ) + "\"";
-    //data += "\n      \"dht_temp_c\": \"" + String( dht_temp_c ) + "\"";
-    data += ",\n      \"dht_humidity\": \"" + String( dht_humidity ) + "\"";
-    data += "\n    }";
-  }
-  if ( _soilSensorEnabled ) {
-    data += ",\n    \"soil\": { ";
-    data += "\n      \"sensors\": { ";
-    data += "\n         \"1\":\"" + String( sensorReadings[0] ) + "\"";
-    data += ",\n         \"2\":\"" + String( sensorReadings[1] ) + "\"";
-    data += ",\n         \"3\":\"" + String( sensorReadings[2] ) + "\"";
-    data += ",\n         \"4\":\"" + String( sensorReadings[3] ) + "\"";
-    data += "\n      }";
-
-    data += ",\n      \"readings\": { ";
-    data += "\n         \"1\":" + String( sensorReadingsNormal[0] ) + "";
-    data += ",\n         \"2\":" + String( sensorReadingsNormal[1] ) + "";
-    data += ",\n         \"3\":" + String( sensorReadingsNormal[2] ) + "";
-    data += ",\n         \"4\":" + String( sensorReadingsNormal[3] ) + "";
-    data += "\n      }";
-
-
-    data += _soilConfigJSON;
-
-    //data += "\"state\":\"" + _soilState + "\"";
-    //data += ", \"moisture\":\"" + String(_soilMoistureReading) + "\" ";
-    data += "\n    }";
-
-
+    data += ",\n    \"air\": {";
+    data += "\n       \"humidity\": " + String( dht_humidity ) + ",";
+    data += "\n       \"temp\": { \n";
+    data += "          \"f\": " + String( _lastTempF ) + "";
+    //data += ",\n          \"c\": \"" + String( dht_temp ) + "\"";
+    data += "\n       }";
+    data += "\n    }\n";
   }
 
-  data += "\n";
-  data += "   }";
+  //
+  //  data += ",\n    \"water\": {";
+  //  data += "\n    }\n";
+  //
+  //  data += ",\n    \"soil\": {";
+  //  data += "\n    }\n";
 
+
+  // CLOSE environment node
+  data += "  }\n";
+
+
+  if ( true ) {
+    data += ",\n  \"sensors\": {";
+
+    data += "  \"uid\": \"000000\"";
+
+    if ( _phSensorEnabled ) data += ",\n    \"ph\": \"" + String(ph_value_double) + "\"";
+
+    if ( _enableTempProbes ) {
+      data += ",\n    \"probes\": {";
+      String probeid = "avg";
+      data += "\n      \"" + probeid + "\": { \"temp_c\": \"" + String(temp_c) + "\" }";
+      //data += ",\n    \"temp_c\": \"" + String(temp_c) + "\"";
+
+      data += "\n    }";
+    }
+
+
+    if ( _flowCounterEnabled ) {
+
+      data += ",\n    \"flow\": {";
+      data += "\n      \"pin\": \"" + String( flowPin1 ) + "\"";
+      data += ",\n      \"count\": \"" + String( flowCounter ) + "\"";
+      data += ",\n      \"lpm\": \"" + String( _lastLPM ) + "\"";
+      data += ",\n      \"lph\": \"" + String( litersPerHour ) + "\"";
+      data += "\n    }";
+    }
+
+    if ( _luxSensorEnabled ) {
+      data += ",\n    \"tsl2561\": {";
+      data += "\n      \"lux\": \"" + String( _lastLUXReading ) + "\"";
+      data += "\n    }";
+    }
+    if ( _BMP085Enabled ) {
+      data += ",\n    \"bmp085\": {";
+      data += "\n      \"temp_c\": \"" + String( _lastTempC ) + "\"";
+      data += ",\n      \"temp_f\": \"" + String( _lastTempF ) + "\"";
+      data += ",\n      \"altitude\": \"" + String( _lastAltitude ) + "\"";
+      data += ",\n      \"pressure\": \"" + String( _lastPressure ) + "\"";
+      data += "\n    }";
+    }
+    if ( _dhtSensorEnabled ) {
+      data += ",\n    \"dht11\": {";
+      data += "\n      \"dht_temp_f\": \"" + String( dht_temp_f ) + "\"";
+      //data += "\n      \"dht_temp_c\": \"" + String( dht_temp_c ) + "\"";
+      data += ",\n      \"dht_humidity\": \"" + String( dht_humidity ) + "\"";
+      data += "\n    }";
+    }
+    if ( _soilSensorEnabled ) {
+      data += ",\n    \"soil\": { ";
+      data += "\n      \"sensors\": { ";
+      data += "\n         \"1\":\"" + String( sensorReadings[0] ) + "\"";
+      data += ",\n         \"2\":\"" + String( sensorReadings[1] ) + "\"";
+      data += ",\n         \"3\":\"" + String( sensorReadings[2] ) + "\"";
+      data += ",\n         \"4\":\"" + String( sensorReadings[3] ) + "\"";
+      data += "\n      }";
+
+      data += ",\n      \"readings\": { ";
+      data += "\n         \"1\":" + String( sensorReadingsNormal[0] ) + "";
+      data += ",\n         \"2\":" + String( sensorReadingsNormal[1] ) + "";
+      data += ",\n         \"3\":" + String( sensorReadingsNormal[2] ) + "";
+      data += ",\n         \"4\":" + String( sensorReadingsNormal[3] ) + "";
+      data += "\n      }";
+
+
+      data += _soilConfigJSON;
+
+      //data += "\"state\":\"" + _soilState + "\"";
+      //data += ", \"moisture\":\"" + String(_soilMoistureReading) + "\" ";
+      data += "\n    }";
+
+
+    }
+
+    data += "\n";
+    data += "   }";
+  }//end sensors node enabled conditional
 
   //  if ( _useIOForSwitchChannels ) {
   //    data += ",\n  \"switches\": [\n";
@@ -726,7 +772,7 @@ void readTemperatureSensors() {
 
 
 void scanI2C() {
-  Wire.begin();
+  Wire.begin(5,4);
   byte error, address;
   Serial.println("Scanning...");
   addTextToDisplay("Scanning i2c...\n");
@@ -792,7 +838,7 @@ int n = 0;
 // Callback methods prototypes
 void CycleCallback();
 Task tCycle( 1000, TASK_FOREVER, &CycleCallback, &ts, true);
-Task tSensor( 10000, TASK_FOREVER, &SensorCallback, &sensorScheduler, true);
+Task tSensor( (5 * 1000), TASK_FOREVER, &SensorCallback, &sensorScheduler, true);
 
 int report_interval = 10 * 60 * 1000;
 Task tReportSensorData( report_interval, TASK_FOREVER, &ReportSensorData, &sensorScheduler, true);
@@ -802,35 +848,35 @@ int displayPhase = 0;
 void CycleCallback() {
   n++;
 
-  
+
   displayStepCount++;
-  
-  switch( displayPhase ){
+
+  switch ( displayPhase ) {
     default:
-    case( 0 ): // regular display
-      if( displayStepCount >= 60 )
-      {
-         displayStepCount = 0;
-         displayPhase =1;
-      }
-    break;
-    case( 1 ):  // screen save
-      if( displayStepCount >= 10 )
+    case ( 0 ): // regular display
+      if ( displayStepCount >= 10 )
       {
         displayStepCount = 0;
-         displayPhase =0;
+        displayPhase = 1;
+      }
+      break;
+    case ( 1 ): // screen save
+      if ( displayStepCount >= 1 )
+      {
+        displayStepCount = 0;
+        displayPhase = 0;
       }
 
-    break;
+      break;
   }
-  
+
   if (n > 255) n = 0;
   renderDisplay();
 }
 
 void ReportSensorData() {
 
-  apiPOST( "/v1/record/sensordata", getJSONData("") );
+  //apiPOST( "/v1/record/sensordata", getJSONData("") );
 
 }
 
@@ -838,7 +884,6 @@ void SensorCallback() {
 
   n++;
   if (n > 255) n = 0;
-
   if ( _enableTempProbes ) readTemperatureSensors();
 
   if ( hasDevice( ph_sensor_address ) ) {
@@ -848,19 +893,18 @@ void SensorCallback() {
     readLUXSensor();
   }
 
+
+  if (_dhtSensorEnabled ) {
+    readDHTSensor();
+  }
+
   //if ( hasDevice( 119 ) ) {
   if ( _BMP085Enabled ) {
     readBMP085Sensor();
   }
-  if (_dhtSensorEnabled ) {
-    readDHTSensor();
-  }
   if ( hasDevice( 72 ) ) {
     readADS1X15();
-
   }
-
-
 }
 
 
@@ -872,15 +916,13 @@ bool hasDevice( int address ) {
   return false;
 }
 void setup() {
-
-
   Serial.begin( 115200 );
   Serial.println( "Starting" );
-
-
   //setupFilesystem();
 
   configureHostname();
+  setup_button_pins();
+
   scanI2C();
 
   if ( hasDevice( 60 ) ) {
@@ -903,7 +945,6 @@ void setup() {
   if ( hasDevice( 72 ) ) {
     Serial.println("[ADS1115] Analog Sensors found 0x48 [72]");
     setupADS1X15();
-
   }
 
   if ( hasDevice( 99 ) ) {
@@ -944,7 +985,7 @@ void setup() {
 
   getTime();
 
-  apiPOST( "/v1/record/nodeconfig", getJSONStatus() );
+  apiPOST( "/nodered/node-ready", getJSONStatus() );
 
   //postValue( "system", "status", "ready" );
   //recordValue( "system", "status", "ready", _hostname );
@@ -988,13 +1029,13 @@ void renderDisplay() {
 
   if ( _renderDisplayEnabled == false ) return;
 
-//  if( displayPhase == 1 ){
-//    display.clearDisplay();
-//    display.drawBitmap(0, 0, launchScreen, 128, 128, WHITE );
-//    display.display();
-//    return;
-//  }
-  
+  if ( displayPhase == 1 ) {
+    display.clearDisplay();
+    display.drawBitmap(0, 0, launchScreen, 128, 128, WHITE );
+    display.display();
+    return;
+  }
+
   if ( _hostname == "aqua" ) {
     // use a predefined util screen
     display.clearDisplay();
@@ -1054,7 +1095,7 @@ void renderDisplay() {
   }
   if ( _enableTempProbes ) {
     //display.println( "Temp: " + String( temp_c ) + "'C" );
-    display.println( "Temp: " + String( currentFarenheight ) + "'F" );
+    display.println( "Probes: " + String( currentFarenheight ) + "'F" );
   }
   if ( _phSensorEnabled ) {
     display.println( "  pH: " + String(ph_value_double) + "" );
@@ -1064,6 +1105,7 @@ void renderDisplay() {
   }
   if ( _dhtSensorEnabled ) {
     display.println( "Humidity: " + String( dht_humidity ) + "%" );
+    display.println( "    Temp: " + String( dht_temp_f ) + "'F" );
   }
 
   if ( _flowCounterEnabled ) {
@@ -1077,6 +1119,11 @@ void renderDisplay() {
     //display.clearDisplay();
     display.drawBitmap(110, 0, bluetoothIcon, 16, 16, WHITE );
   }
+
+  if ( recentSensorErrors ) {
+    display.drawBitmap(110, 78, sensorErrorsIcon, 16, 16, WHITE );
+  }
+
   //  if (_enableOTAUpdate) {
   //    display.drawBitmap(96, 48, otaIcon, 32, 16, WHITE );
   //  }
@@ -1190,17 +1237,17 @@ void updateDisplay() {
 
 void initDisplay()
 {
-  _showBootScreen = true;
+  _showBootScreen = false;
   // SSD1306 Init
   display.begin(SSD1306_SWITCHCAPVCC);  // Switch OLED
   display.clearDisplay();
-  if( _showBootScreen ){
+  if ( _showBootScreen ) {
     display.drawBitmap(0, 0, launchScreen, 128, 128, WHITE );
     display.display();
     delay( 10  * 1000 );
     display.clearDisplay();
   }
-  
+
   if ( TEST_MODE ) {
     updateDisplay();
     for ( int n = 0; n < 10; n++) {
@@ -1272,13 +1319,13 @@ void readLUXSensor() {
 void loop() {
 
   //printDebug("Loop");
-  handleBluetooth();
-
+  //handleBluetooth();
+  read_button_pins();
   //pinValues = read_shift_regs();
 
 
 
-  if ( _buttonBoardConnected ) handleButtons();
+  //if ( _buttonBoardConnected ) handleButtons();
   //
   //  if ( buttonAState == 0 ) {
   //    if ( buttonADown ) {

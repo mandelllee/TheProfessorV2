@@ -7,7 +7,7 @@ int _soilMoistureReadingIndex = 0;
 
 int _lastSoilMoistureReading = 0;
 int _soilMoistureReading = 0;
-bool _enableTempProbes = false;
+
 String _soilState = "?";
 
 

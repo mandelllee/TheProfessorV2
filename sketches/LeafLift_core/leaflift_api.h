@@ -1,8 +1,11 @@
 
 
+bool postEnabled = true;
 
 void httpPOST( String host, int httpPort, String url, String postData ) {
 
+  if( postEnabled == false ) return;
+  
   Serial.print("Requesting URL: ");
   Serial.println(host + url);
 

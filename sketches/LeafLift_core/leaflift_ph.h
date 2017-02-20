@@ -70,7 +70,7 @@ void readPhSensor() {
   }
   ph = sendPhCommand( "R" );
   float p = ph.toFloat();
-  double new_ph_double = roundf( p * 10 ) / 10;
+  double new_ph_double = roundf( p * 100 ) / 100;
 
   // is new value different from last ?
   if ( new_ph_double != ph_value_double ) {
