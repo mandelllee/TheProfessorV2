@@ -36,23 +36,24 @@ void configureHostname() {
 
   } else if ( chip_id == "1265664" ) {
 
-    _hostname = "carrot";
+    _hostname = "carrot";    
     useIOForSoilSensor = true;
-
+    
   } else if ( chip_id == "1189564" ) {
+
+    wifi_ssid = "Bork 2.4";
+    wifi_psk = "OrlandoNakazawa!";
 
     _hostname = "pea";
     useIOForSoilSensor = true;
     
     channel_pins[1]= 0; //LED
-    button_pins[1] = 4; //BUTTON
+    //button_pins[1] = 4; //BUTTON
     
     channel_pins[2]= 1; //LED
-    button_pins[2] = 5; //BUTTON
-button_pins[3] = 6; //BUTTON
-button_pins[4] = 7; //BUTTON
-
-
+    //button_pins[2] = 5; //BUTTON
+    //button_pins[3] = 6; //BUTTON
+    //button_pins[4] = 7; //BUTTON
     channel_pins[3]= 2; //LED
     channel_pins[4]= 3; //LED
     

@@ -153,8 +153,10 @@ SoftwareSerial BT(14, 12);
 
 #include "leaflift_ADS1X15.h"
 
-const char* ssid     = "gbsx";
-const char* password = "OrlandoNakazawa!";
+char* wifi_ssid     = "gbsx";
+char* wifi_psk = "OrlandoNakazawa!";
+
+
 String ipAddressString = "";
 ESP8266WebServer server(80);
 
@@ -248,10 +250,10 @@ void __setupWiFi() {
 
 void connectWiFi() {
 
-  Serial.println("Connecting to wiFi ssid: " + String( ssid ) + "...");
+  Serial.println("Connecting to wiFi ssid: " + String( wifi_ssid ) + "...");
 
-  displayTextOnDisplay("Connecting to:\n   " + String(ssid) + "...");
-  WiFi.begin(ssid, password);
+  displayTextOnDisplay("Connecting to:\n   " + String(wifi_ssid) + "...");
+  WiFi.begin(wifi_ssid, wifi_psk);
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -1071,7 +1073,7 @@ void renderDisplay() {
   display.setTextSize(1);
   display.println( "CORE: " + String( VERSION ) );
   display.println( "HOST: " + String( _hostname ) );
-  display.println( "WiFi: " + String( ssid ) );
+  display.println( "WiFi: " + String( wifi_ssid ) );
   display.println( "  IP: " + String( ipAddressString ) );
 
   int mt = (int)_tickCount / 60;
