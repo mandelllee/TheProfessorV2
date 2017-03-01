@@ -84,10 +84,10 @@ Scheduler sensorScheduler;
 #include "leaflift_switches.h"
 
 
-//String API_HOST = "api-quadroponic.rhcloud.com";
-//int API_PORT = 80;
-char API_HOST[] = "192.168.1.88";
-int API_PORT = 3000;
+String API_HOST = "api-quadroponic.rhcloud.com";
+int API_PORT = 80;
+//char API_HOST[] = "192.168.1.88";
+//int API_PORT = 3000;
 
 bool SEND_DATA_TO_API = true;
 int SEND_DATA_INTERVAL = 10000;
@@ -767,9 +767,9 @@ Task tCycle( 1000, TASK_FOREVER, &CycleCallback, &ts, true);
 Task tSensor( 10000, TASK_FOREVER, &SensorCallback, &sensorScheduler, true);
 
 int reportingIntervalMinutes = 10;
-//int report_interval = reportingIntervalMinutes * 60 * 1000;
+int report_interval = reportingIntervalMinutes * 60 * 1000;
 
-int report_interval = 5 * 1000;
+//int report_interval = 5 * 1000;
 Task tReportSensorData( report_interval, TASK_FOREVER, &ReportSensorData, &sensorScheduler, true);
 
 #include "leaflift_server.h"
@@ -784,21 +784,22 @@ void ReportSensorData() {
 
   apiPOST( "/v1/record/sensordata", getJSONData("") );
 
-//    char jsonStr[300];
-//    String jsonData = getJSONData("");
-//    jsonData.toCharArray(jsonStr,jsonData.length() + 1);
-//    
-//  if (!mqttClient.connected()) {
-//    mqttReconnect();
-//   
-//    mqttClient.publish("leaflift/sensorjson",jsonStr);
-////    mqttClient.publish("leaflift/sensorjson","json");
-//        Serial.println("String jsonstring: " + String(jsonStr));
-// }
+  //    char jsonStr[300];
+  //    String jsonData = getJSONData("");
+  //    jsonData.toCharArray(jsonStr,jsonData.length() + 1);
+  //
+  //  if (!mqttClient.connected()) {
+  //    mqttReconnect();
+  //
+  //    mqttClient.publish("leaflift/sensorjson",jsonStr);
+  ////    mqttClient.publish("leaflift/sensorjson","json");
+  //        Serial.println("String jsonstring: " + String(jsonStr));
+  // }
 
 
 }
 char message_buff[100];
+char topic_buff[100];
 
 void SensorCallback() {
   n++;
@@ -810,15 +811,19 @@ void SensorCallback() {
     readPhSensor();
   }
   if ( hasDevice( 57 ) ) {
-    
+
     readLUXSensor();
-//       String pubString = String(_lastLUXReading);
-//        pubString.toCharArray(message_buff, pubString.length()+1);
-//        Serial.println("String to publish: " + pubString);
-// if (!mqttClient.connected()) {
-//    mqttReconnect();
-//      mqttClient.publish("leaflift/lux", message_buff);
-// }
+    String pubString = String(_lastLUXReading);
+    pubString.toCharArray(message_buff, pubString.length() + 1);
+
+    String topic = "leaflift/" + _hostname + "/lux";
+    topic.toCharArray(topic_buff, 100);
+
+    Serial.println("String to publish: " + pubString);
+    if (!mqttClient.connected()) {
+      mqttReconnect();
+      mqttClient.publish(topic_buff, message_buff);
+    }
   }
 
   //if ( hasDevice( 119 ) ) {
@@ -829,18 +834,24 @@ void SensorCallback() {
     readDHTSensor();
 
 
-    
+
     String pubString = String(dht_temp_f);
-    pubString.toCharArray(message_buff, pubString.length()+1);
- if (!mqttClient.connected()) {
-    mqttReconnect();
- }
- Serial.println("MQTT publish dht temp: " + pubString);
-    mqttClient.publish("leaflift/dhtTemp", message_buff);
-      pubString = String(dht_humidity);
-    pubString.toCharArray(message_buff, pubString.length()+1);
- Serial.println("MQTT publish dht humisty: " + pubString);
-mqttClient.publish("leaflift/dhtHumidity", message_buff);
+    pubString.toCharArray(message_buff, pubString.length() + 1);
+    if (!mqttClient.connected()) {
+      mqttReconnect();
+    }
+    String topic = "leaflift/" + _hostname + "/dhtTemp";
+    topic.toCharArray(topic_buff, 100);
+
+    Serial.println("MQTT publish dht temp: " + pubString);
+    mqttClient.publish(topic_buff, message_buff);
+
+    pubString = String(dht_humidity);
+    pubString.toCharArray(message_buff, pubString.length() + 1);
+    Serial.println("MQTT publish dht humisty: " + pubString);
+    topic = "leaflift/" + _hostname + "/dhtHumidity";
+    topic.toCharArray(topic_buff, 100);
+    mqttClient.publish(topic_buff, message_buff);
   }
   if ( hasDevice( 72 ) ) {
     readADS1X15();
@@ -1316,9 +1327,9 @@ void loop() {
 
   ArduinoOTA.handle();
 
-//  if (!mqttClient.connected()) {
-//    mqttReconnect();
-//  }
+  //  if (!mqttClient.connected()) {
+  //    mqttReconnect();
+  //  }
   mqttClient.loop();
 
 }

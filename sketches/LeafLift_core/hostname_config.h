@@ -124,12 +124,23 @@ void configureHostname() {
     _luxSensorEnabled = true;
     _dhtSensorEnabled = true;
 
+  } else if ( chip_id == "13383780" ) {
+
+    _hostname = "piruWestGR1";
+    _luxSensorEnabled = true;
+    _dhtSensorEnabled = true;
+
   } else if ( chip_id == "12601523" ) {
-    _hostname = "pirupower";
-    _useIOForSwitchChannels = true;
-   _dhtSensorEnabled = true;
-     ch1_label = "Desk Lamp";
-    ch1_pin = 0;
+ 
+    _hostname = "piruWestGR2";
+       _luxSensorEnabled = true;
+    _dhtSensorEnabled = true;
+
+//    _hostname = "piruPower";
+//    _useIOForSwitchChannels = true;
+//   _dhtSensorEnabled = true;
+//     ch1_label = "Desk Lamp";
+//    ch1_pin = 0;
 
 
   } else if ( chip_id == "1555028" ) {
