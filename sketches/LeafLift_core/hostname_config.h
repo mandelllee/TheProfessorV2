@@ -4,6 +4,7 @@
 void configureHostname() {
 
   chip_id = String( ESP.getChipId() );
+  Serial.println("Chip ID: " + chip_id);
   //char c[] = chip_id.c_str();
 
   char c[chip_id.length() + 1];
@@ -173,19 +174,46 @@ void configureHostname() {
     _soilConfigJSON += "      }\n";
 
 
-  } else if ( chip_id == "1770948" ) {
-    _hostname = "piru";
-    _soilSensorEnabled = true;
-    _phSensorEnabled = true;
-    _enableTempProbes = true;
-    _dhtSensorEnabled = true;
+//  } else if ( chip_id == "1770948" ) {
+//    _hostname = "piru";
+//    _soilSensorEnabled = true;
+//    _phSensorEnabled = true;
+//    _enableTempProbes = true;
+//    _dhtSensorEnabled = true;
+
+  } else if ( chip_id == "1607565" ) {
+    _hostname = "piruWestRoom1";
+     _dhtSensorEnabled = true;
+  _luxSensorEnabled = true;
+      wifi_ssid = "flamingo";
+    wifi_psk = "leemandell";
+  API_HOST = "api-quadroponic.rhcloud.com";
+  API_PORT = 80;
+
+ } else if ( chip_id == "312335" ) {
+    _hostname = "piruWestRoom2";
+     _dhtSensorEnabled = true;
+  _luxSensorEnabled = true;
+      wifi_ssid = "flamingo";
+    wifi_psk = "leemandell";
+  API_HOST = "api-quadroponic.rhcloud.com";
+  API_PORT = 80;
 
   } else if ( chip_id == "13382423" ) {
 
     _hostname = "fillmore";
 
-  } else if ( chip_id == "12601523" ) {
+  } else if ( chip_id == "1770948" ) {
     _hostname = "pirupower";
+   _useIOForSwitchChannels = true;
+    channel_pins[1] = 0;
+    channel_pins[2] = 1 ;
+    channel_pins[3] = 2;
+    channel_pins[4] = 3;
+
+    _dhtSensorEnabled = true;
+    wifi_ssid = "flamingo";
+    wifi_psk = "leemandell";
 
 
   } else if ( chip_id == "1658862" ) {
