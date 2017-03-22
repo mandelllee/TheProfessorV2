@@ -182,7 +182,25 @@ void configureHostname() {
 //    _dhtSensorEnabled = true;
 
   } else if ( chip_id == "1607565" ) {
-    _hostname = "piruWestRoom1";
+    _hostname = "piruWestGR1";
+     _dhtSensorEnabled = true;
+  _luxSensorEnabled = true;
+      wifi_ssid = "Stone-AC";
+    wifi_psk = "8056891059";
+  API_HOST = "api-quadroponic.rhcloud.com";
+  API_PORT = 80;
+
+ } else if ( chip_id == "312335" ) {
+    _hostname = "piruWestGR2";
+     _dhtSensorEnabled = true;
+  _luxSensorEnabled = true;
+      wifi_ssid = "Stone-AC";
+    wifi_psk = "8056891059";
+  API_HOST = "api-quadroponic.rhcloud.com";
+  API_PORT = 80;
+
+} else if ( chip_id == "291630" ) {
+    _hostname = "piruNorthGR1";
      _dhtSensorEnabled = true;
   _luxSensorEnabled = true;
       wifi_ssid = "flamingo";
@@ -190,14 +208,7 @@ void configureHostname() {
   API_HOST = "api-quadroponic.rhcloud.com";
   API_PORT = 80;
 
- } else if ( chip_id == "312335" ) {
-    _hostname = "piruWestRoom2";
-     _dhtSensorEnabled = true;
-  _luxSensorEnabled = true;
-      wifi_ssid = "flamingo";
-    wifi_psk = "leemandell";
-  API_HOST = "api-quadroponic.rhcloud.com";
-  API_PORT = 80;
+  
 
   } else if ( chip_id == "13382423" ) {
 

@@ -329,7 +329,7 @@ void readBMP085Sensor() {
   Serial.println(" meters");
 
 }
-#include "leaflift_soil.h"
+#include "leaflift_soil.h" 
 
 
 void setupIO() {
@@ -878,7 +878,7 @@ void CycleCallback() {
 
 void ReportSensorData() {
 
-  //apiPOST( "/v1/record/sensordata", getJSONData("") );
+  apiPOST( "/v1/record/sensordata", getJSONData("") );
 
 }
 
