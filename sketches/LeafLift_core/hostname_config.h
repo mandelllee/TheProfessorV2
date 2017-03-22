@@ -34,31 +34,61 @@ void configureHostname() {
     _soilSensorEnabled = true;
 
 
+ } else if ( chip_id == "8870018" ) {
+
+    _hostname = "potato";
+    _dhtSensorEnabled = true;
+    _useIOForSwitchChannels = false;
+    
+    // this will function as the setup button
+    button_pins[16] = 14;
+
   } else if ( chip_id == "1265664" ) {
 
-    _hostname = "carrot";    
-    useIOForSoilSensor = true;
-    
+    _hostname = "professor1";
+    _dhtSensorEnabled = true;
+    _co2_sensor_enabled = true;
+
+    // this will function as the setup button
+    button_pins[0] = 14;
+
   } else if ( chip_id == "1189564" ) {
 
-    wifi_ssid = "Bork 2.4";
-    wifi_psk = "OrlandoNakazawa!";
+    //    wifi_ssid = "Bork 2.4";
+    //    wifi_psk = "OrlandoNakazawa!";
 
     _hostname = "pea";
-    useIOForSoilSensor = true;
+    useIOForSoilSensor = false;
+    _dhtSensorEnabled = true;
+    _enableTempProbes = false;
+    _useIOForSwitchChannels = false;
+    channel_pins[3] = 12;
+    channel_pins[2] = 13;
     
-    channel_pins[1]= 0; //LED
+    //channel_pins[1]= 0; //LED
     //button_pins[1] = 4; //BUTTON
-    
-    channel_pins[2]= 1; //LED
+
+    //channel_pins[2]= 1; //LED
     //button_pins[2] = 5; //BUTTON
     //button_pins[3] = 6; //BUTTON
     //button_pins[4] = 7; //BUTTON
-    channel_pins[3]= 2; //LED
-    channel_pins[4]= 3; //LED
-    
-  } else if ( chip_id == "12628048" ) {
-    _hostname = "proto1";
+    //channel_pins[3]= 2; //LED
+    //channel_pins[4]= 3; //LED
+
+ } else if ( chip_id == "14019596" ) {
+
+    _hostname = "farm1";
+    _dhtSensorEnabled = true;
+
+    channel_pins[3] = 12;
+    channel_pins[2] = 13;
+ 
+ } else if ( chip_id == "14018673" ) {
+    _hostname = "professor2";
+    _dhtSensorEnabled = true;
+
+  } else if ( chip_id == "chipid") {
+    _hostname = "soil_proto";
 
     channel_pins[1] = 0;
     channel_pins[2] = 1;
@@ -191,13 +221,12 @@ void configureHostname() {
   } else if ( chip_id == "1658862" ) {
     _hostname = "insulin";
     _useIOForSwitchChannels = false;
-
+    _dhtSensorEnabled = true;
     button_pins[1] = 12;
-    //button_led_pins[1] = 15;
     channel_pins[3] = 15;
 
-    //button_pins[2] = 14;
-    //channel_pins[2] = 13;
+    button_pins[2] = 14;
+    channel_pins[4] = 13;
 
   } else if ( chip_id == "1555028" ) {
 
@@ -211,19 +240,19 @@ void configureHostname() {
     _useIOForSwitchChannels = true;
     button_pins[1] = 2;
     channel_pins[1] = 3;//LED
-    
+
     button_pins[2] = 4;
     channel_pins[2] = 5;//LED
-    
+
     button_pins[3] = 6;
     channel_pins[3] = 7;//LED
-    
+
     channel_pins[4] = 8;//LED
     button_pins[4] = 9;
-    
+
     channel_pins[5] = 10;//LED
     button_pins[5] = 11;
-    
+
     channel_pins[6] = 15;//LED
     button_pins[6] = 0;
 
@@ -276,6 +305,7 @@ void configureHostname() {
     _phSensorEnabled = true;
     _enableTempProbes = true;
     _flowCounterEnabled = false;
+    _dhtSensorEnabled = true;
 
     _useIOForSwitchChannels = true;
     channel_pins[1] = 0;
@@ -287,7 +317,7 @@ void configureHostname() {
     button_pins[2] = 5;
     button_pins[3] = 6;
     button_pins[4] = 7;
-    
+
   } else if ( chip_id == "13890934" ) {
 
     _hostname = "hermes";
@@ -330,8 +360,9 @@ void configureHostname() {
 
     _dhtSensorEnabled = true;
 
-  } else if ( chip_id == "8870018" ) {
-    _hostname = "potato";
+ 
+  } else if ( chip_id == "8870018_old" ) {
+    _hostname = "potato_old";
 
     _buttonBoardConnected = true;
 
@@ -450,12 +481,12 @@ void configureHostname() {
     _BMP085Enabled = true;
     _enableTempProbes = false;
 
-//    _useIOForSwitchChannels = false;
-//
-//    channel_pins[1] = 2;
-//    button_pins[1] = 16;
-//    channel_pins[2] = 0;
-//    button_pins[2] = 15;
+    //    _useIOForSwitchChannels = false;
+    //
+    //    channel_pins[1] = 2;
+    //    button_pins[1] = 16;
+    //    channel_pins[2] = 0;
+    //    button_pins[2] = 15;
 
   } else if ( chip_id == "16044873" ) {
     _hostname = "taco";

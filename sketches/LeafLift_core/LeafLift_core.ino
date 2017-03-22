@@ -47,7 +47,7 @@
 //   GND  GND  GND   V+
 //   (I2C Addr 32)
 
-String VERSION = "0.0-redish";
+String VERSION = "0.1-redish";
 
 String BOARD_ID = "";
 bool _buttonBoardConnected = false;
@@ -65,6 +65,9 @@ int _lastPressure;
 
 
 
+
+bool _co2_sensor_enabled = false;
+unsigned int _currentCO2 = 0;
 
 
 int dry_calibration[] = {0, 0, 0, 0};
@@ -96,12 +99,14 @@ OneWire  ds(oneWirePin);  //a 2.2K resistor is necessary for 3.3v on the signal 
 
 Scheduler ts;
 Scheduler sensorScheduler;
+Scheduler updateScheduler;
 
 #include "leaflift_crypto.h"
 
 #include "Adafruit_MCP23017.h"
 Adafruit_MCP23017 mcp;
 
+//#include <ESP8266httpUpdate.h>
 
 
 bool recentSensorErrors = false;
@@ -111,7 +116,7 @@ int API_PORT = 80;
 //char API_HOST[] = "10.5.1.25";
 //int API_PORT = 3000;
 
-bool SEND_DATA_TO_API = true;
+bool SEND_DATA_TO_API = false;
 int SEND_DATA_INTERVAL = 10000;
 
 bool _soilSensorEnabled = false;
@@ -127,6 +132,7 @@ String currentDisplayText = "";
 #include <ArduinoOTA.h>
 bool _renderDisplayEnabled = true;
 
+bool bluetoothAvailable = false;
 bool _enableOTAUpdate = true;
 bool _phSensorEnabled = false;
 bool _uptime_display = true;
@@ -136,7 +142,8 @@ bool _BMP085Enabled = false;
 bool _flowCounterEnabled = false;
 
 #include <SoftwareSerial.h>
-SoftwareSerial BT(14, 12);
+
+//SoftwareSerial BT(14, 12);
 // creates a "virtual" serial port/UART
 // connect BT module TX to D10
 // connect BT module RX to D11
@@ -167,11 +174,16 @@ const char *ap_passwd    = "1234567890";
 
 void setupWiFi()
 {
-  //    WiFi.mode(WIFI_AP);
-  //    WiFi.softAP(ap_name, ap_passwd);
-
   WiFi.mode(WIFI_STA);
-  connectWiFi();
+  Serial.println("Connecting to wiFi ssid: " + String( wifi_ssid ) + "...");
+
+  displayTextOnDisplay("Connecting to:\n   " + String(wifi_ssid) + "...");
+  WiFi.begin(wifi_ssid, wifi_psk);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    addTextToDisplay( "." );
+  }
+  saveIP();
 }
 
 bool promptVisible = false;
@@ -248,19 +260,6 @@ void __setupWiFi() {
   //connectWiFi();
 }
 
-void connectWiFi() {
-
-  Serial.println("Connecting to wiFi ssid: " + String( wifi_ssid ) + "...");
-
-  displayTextOnDisplay("Connecting to:\n   " + String(wifi_ssid) + "...");
-  WiFi.begin(wifi_ssid, wifi_psk);
-
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    addTextToDisplay( "." );
-  }
-  saveIP();
-}
 
 
 void saveIP() {
@@ -340,38 +339,38 @@ void setupIO() {
 
   //mcp.pinMode(6, OUTPUT);
 
-//  mcp.pinMode(0, OUTPUT);
-//  mcp.pinMode(1, OUTPUT);
-//  mcp.pinMode(2, OUTPUT);
-//  mcp.pinMode(3, OUTPUT);
-//  mcp.digitalWrite(0, HIGH);
-//  mcp.digitalWrite(1, HIGH);
-//  mcp.digitalWrite(2, HIGH);
-//  mcp.digitalWrite(3, HIGH);
-//
-//  mcp.pinMode(4, OUTPUT);
-//  mcp.pinMode(5, OUTPUT);
-//  mcp.pinMode(6, OUTPUT);
-//  mcp.pinMode(7, OUTPUT);
-//
-//  mcp.digitalWrite(4, HIGH);
-//  mcp.digitalWrite(5, HIGH);
-//  mcp.digitalWrite(6, HIGH);
-//  mcp.digitalWrite(7, HIGH);
-//
-//
-//  mcp.pinMode(8, INPUT);
-//  mcp.pinMode(9, INPUT);
-//  mcp.pinMode(10, INPUT);
-//  mcp.pinMode(11, INPUT);
-//  mcp.pinMode(12, OUTPUT);
-//  mcp.pinMode(13, OUTPUT);
-//  mcp.pinMode(14, OUTPUT);
-//  mcp.pinMode(15, OUTPUT);
-//  mcp.pullUp(8, HIGH);
-//  mcp.pullUp(9, HIGH);
-//  mcp.pullUp(10, HIGH);
-//  mcp.pullUp(11, HIGH);
+  //  mcp.pinMode(0, OUTPUT);
+  //  mcp.pinMode(1, OUTPUT);
+  //  mcp.pinMode(2, OUTPUT);
+  //  mcp.pinMode(3, OUTPUT);
+  //  mcp.digitalWrite(0, HIGH);
+  //  mcp.digitalWrite(1, HIGH);
+  //  mcp.digitalWrite(2, HIGH);
+  //  mcp.digitalWrite(3, HIGH);
+  //
+  //  mcp.pinMode(4, OUTPUT);
+  //  mcp.pinMode(5, OUTPUT);
+  //  mcp.pinMode(6, OUTPUT);
+  //  mcp.pinMode(7, OUTPUT);
+  //
+  //  mcp.digitalWrite(4, HIGH);
+  //  mcp.digitalWrite(5, HIGH);
+  //  mcp.digitalWrite(6, HIGH);
+  //  mcp.digitalWrite(7, HIGH);
+  //
+  //
+  //  mcp.pinMode(8, INPUT);
+  //  mcp.pinMode(9, INPUT);
+  //  mcp.pinMode(10, INPUT);
+  //  mcp.pinMode(11, INPUT);
+  //  mcp.pinMode(12, OUTPUT);
+  //  mcp.pinMode(13, OUTPUT);
+  //  mcp.pinMode(14, OUTPUT);
+  //  mcp.pinMode(15, OUTPUT);
+  //  mcp.pullUp(8, HIGH);
+  //  mcp.pullUp(9, HIGH);
+  //  mcp.pullUp(10, HIGH);
+  //  mcp.pullUp(11, HIGH);
 
   //if ( TEST_MODE ) testSwitches();
 
@@ -413,6 +412,7 @@ void testSwitches() {
 }
 #include "leaflift_bluetooth.h"
 
+int switch_state = 0;
 void toggleAllSwitches() {
 
   delay(250);
@@ -523,8 +523,12 @@ String getJSONData( String msg )
   }
   data += "\n    }";
 
-  if ( _dhtSensorEnabled ) {
+  if ( _dhtSensorEnabled || _co2_sensor_enabled ) {
     data += ",\n    \"air\": {";
+
+    if ( _co2_sensor_enabled ) {
+      data += "\n       \"co2\": " + String( _currentCO2 ) + ",";
+    }
     data += "\n       \"humidity\": " + String( dht_humidity ) + ",";
     data += "\n       \"temp\": { \n";
     data += "          \"f\": " + String( _lastTempF ) + "";
@@ -614,8 +618,6 @@ String getJSONData( String msg )
       //data += "\"state\":\"" + _soilState + "\"";
       //data += ", \"moisture\":\"" + String(_soilMoistureReading) + "\" ";
       data += "\n    }";
-
-
     }
 
     data += "\n";
@@ -774,7 +776,11 @@ void readTemperatureSensors() {
 
 
 void scanI2C() {
-  Wire.begin(5,4);
+
+  // Standard hookup is 5, 4
+  Wire.begin( 5, 4 );
+
+
   byte error, address;
   Serial.println("Scanning...");
   addTextToDisplay("Scanning i2c...\n");
@@ -841,11 +847,24 @@ int n = 0;
 void CycleCallback();
 Task tCycle( 1000, TASK_FOREVER, &CycleCallback, &ts, true);
 Task tSensor( (5 * 1000), TASK_FOREVER, &SensorCallback, &sensorScheduler, true);
+Task updateCycle( 5 * 60 * 1000, TASK_FOREVER, &checkForUpdates, &updateScheduler, true );
+
 
 int report_interval = 10 * 60 * 1000;
 Task tReportSensorData( report_interval, TASK_FOREVER, &ReportSensorData, &sensorScheduler, true);
 int displayStepCount = 0;
 int displayPhase = 0;
+
+
+void checkForUpdates(){
+  
+  Serial.println("------------------------------ SYSTEM CYCLE CALLBACK ------------------------------");
+  // Check for update
+  String response = urlRequest( "10.5.1.160", "/nodered/update.json?current="+VERSION+"&nodeid=" + _hostname, 80 );
+  Serial.println("RESPONSE: [" + response + "]");
+
+  
+}
 
 void CycleCallback() {
   n++;
@@ -884,9 +903,14 @@ void ReportSensorData() {
 
 void SensorCallback() {
 
+  Serial.println("\n----------------------------------\nReading Sensors...\n\n" );
   n++;
   if (n > 255) n = 0;
   if ( _enableTempProbes ) readTemperatureSensors();
+
+  if ( _co2_sensor_enabled ) {
+    read_K30();
+  }
 
   if ( hasDevice( ph_sensor_address ) ) {
     readPhSensor();
@@ -894,7 +918,6 @@ void SensorCallback() {
   if ( hasDevice( 57 ) ) {
     readLUXSensor();
   }
-
 
   if (_dhtSensorEnabled ) {
     readDHTSensor();
@@ -909,6 +932,8 @@ void SensorCallback() {
   }
 }
 
+#include <WiFiManager.h>
+#include <DNSServer.h>
 
 bool hasDevice( int address ) {
 
@@ -917,14 +942,234 @@ bool hasDevice( int address ) {
   }
   return false;
 }
+
+
+void saveWiFiConfigCallback () {
+
+  Serial.println("Should save config");
+  displayTextOnDisplay("Saving Config, and rebooting...");
+
+}
+//WiFiManager wifiManager;
+
+char loaded_api_url[205] = "api.leaflift.local";
+char notes[255] = "";
+
+bool shouldSaveConfig = false;
+//callback notifying us of the need to save config
+void saveConfigCallback () {
+  Serial.println("Should save config");
+  shouldSaveConfig = true;
+}
+
+
+void activateSetupMode() {
+
+  _renderDisplayEnabled = false;
+  displayTextOnDisplay("Entering Setup mode");
+
+  String ssid = String("PROF-") + String(ESP.getChipId(), HEX);
+
+
+  displayTextOnDisplay("Connect to configure: \nSSID: \n" + ssid  );//+ "\n\nPass: \n" + String(ap_default_psk ) + "" );
+
+
+  //clean FS, for testing
+  //SPIFFS.format();
+
+  //read configuration from FS json
+  Serial.println("mounting FS...");
+
+  if (SPIFFS.begin()) {
+    Serial.println("mounted file system");
+    if (SPIFFS.exists("/professor_config.json")) {
+      //file exists, reading and loading
+      Serial.println("reading config file");
+      File configFile = SPIFFS.open("/professor_config.json", "r");
+      if (configFile) {
+        Serial.println("opened config file");
+        size_t size = configFile.size();
+        // Allocate a buffer to store contents of the file.
+        std::unique_ptr<char[]> buf(new char[size]);
+
+        configFile.readBytes(buf.get(), size);
+        DynamicJsonBuffer jsonBuffer;
+        JsonObject& json = jsonBuffer.parseObject(buf.get());
+        json.printTo(Serial);
+        if (json.success()) {
+          Serial.println("\nparsed json");
+
+          //          strcpy(loaded_api_url, json["api_url"]);
+          //          strcpy(notes, json["notes"]);
+
+          //          strcpy(mqtt_port, json["mqtt_port"]);
+          //          strcpy(blynk_token, json["blynk_token"]);
+
+          Serial.println("loaded_api_url: " + String(loaded_api_url) );
+
+
+        } else {
+          Serial.println("failed to load json config");
+        }
+      }
+    }
+  } else {
+    Serial.println("failed to mount FS");
+  }
+  //end read
+
+  // The extra parameters to be configured (can be either global or just in the setup)
+  // After connecting, parameter.getValue() will get you the configured value
+  // id/name placeholder/prompt default length
+  WiFiManagerParameter custom_api_url("api_url", "API url", loaded_api_url, 205 );
+
+  WiFiManagerParameter custom_notes("notes", "Notes", notes, 255 );
+
+
+  //  WiFiManagerParameter custom_mqtt_port("port", "mqtt port", mqtt_port, 6);
+  //  WiFiManagerParameter custom_blynk_token("blynk", "blynk token", blynk_token, 32);
+
+  //WiFiManager
+  //Local intialization. Once its business is done, there is no need to keep it around
+  WiFiManager wifiManager;
+
+  //set config save notify callback
+  wifiManager.setSaveConfigCallback(saveConfigCallback);
+
+  //set static ip
+  //wifiManager.setSTAStaticIPConfig(IPAddress(10, 0, 1, 99), IPAddress(10, 0, 1, 1), IPAddress(255, 255, 255, 0));
+
+  //add all your parameters here
+  wifiManager.addParameter(&custom_api_url);
+  wifiManager.addParameter(&custom_notes);
+
+  //reset settings - for testing
+  wifiManager.resetSettings();
+
+  //set minimu quality of signal so it ignores AP's under that quality
+  //defaults to 8%
+  wifiManager.setMinimumSignalQuality(50);
+
+  //sets timeout until configuration portal gets turned off
+  //useful to make it all retry or go to sleep
+  //in seconds
+  //wifiManager.setTimeout(120);
+
+  //fetches ssid and pass and tries to connect
+  //if it does not connect it starts an access point with the specified name
+  //here  "AutoConnectAP"
+  //and goes into a blocking loop awaiting configuration
+  if (!wifiManager.autoConnect( ssid.c_str(), "123456" )) {
+    Serial.println("failed to connect and hit timeout");
+    delay(3000);
+    //reset and try again, or maybe put it to deep sleep
+    ESP.reset();
+    delay(5000);
+  }
+
+  //wifiManager.startConfigPortal( ssid.c_str(), "123456" );
+
+  //if you get here you have connected to the WiFi
+  Serial.println("connected...yeey :)");
+  //read updated parameters
+  strcpy( loaded_api_url, custom_api_url.getValue() );
+  strcpy( notes, custom_notes.getValue() );
+
+  //save the custom parameters to FS
+  if (shouldSaveConfig) {
+    displayTextOnDisplay("Saved config.");
+
+    Serial.println("saving config");
+    DynamicJsonBuffer jsonBuffer;
+    JsonObject& json = jsonBuffer.createObject();
+
+    json["api_url"] = loaded_api_url;
+    json["notes"] = notes;
+
+    File configFile = SPIFFS.open("/professor_config.json", "w");
+    if (!configFile) {
+      Serial.println("failed to open config file for writing");
+    }
+
+    json.printTo(Serial);
+    json.printTo(configFile);
+    configFile.close();
+    //end save
+  }
+
+  Serial.println("local ip");
+  Serial.println(WiFi.localIP());
+
+  saveIP();
+  _renderDisplayEnabled = true;
+}
+
+
+void ___activateSetupMode() {
+
+  WiFiManager wifiManager;
+  String ssid = String("PROF-") + String(ESP.getChipId(), HEX);
+
+  _renderDisplayEnabled = false;
+  displayTextOnDisplay("Entering Setup mode");
+  displayTextOnDisplay("Connect to configure: \nSSID: \n" + ssid  );//+ "\n\nPass: \n" + String(ap_default_psk ) + "" );
+
+
+  //wifiManager.autoConnect( "PROF-12345", "12345" );
+
+  //wifiManager.setCustomHeadElement("<style>html{filter: invert(100%); -webkit-filter: invert(100%);}</style>");
+
+
+  WiFiManagerParameter custom_text("<h1>node config</h1>");
+  wifiManager.addParameter(&custom_text);
+
+  wifiManager.setMinimumSignalQuality(50);
+
+  WiFiManagerParameter api_url( "API", "API", "api.leafliftsystems.com/v2", 205, " readonly" );
+  wifiManager.addParameter(&api_url);
+
+  wifiManager.setSaveConfigCallback(saveWiFiConfigCallback);
+  wifiManager.startConfigPortal( ssid.c_str(), "123456" );
+
+}
+
+
+#define SERIAL_VERBOSE
+#define HOSTNAME "PROF-" ///< Hostname. The setup function adds the Chip ID at the end.
+const char* ap_default_ssid = "professor"; ///< Default SSID.
+const char* ap_default_psk  = "professor"; ///< Default PSK.
+void _activateSetupMode() {
+  WiFiManager wifiManager;
+  _hostname += String(HOSTNAME) + String(ESP.getChipId(), HEX);
+  String ssid = _hostname;//String(ap_default_ssid) + "-"+ String(ESP.getChipId(), HEX);
+
+  _renderDisplayEnabled = false;
+  displayTextOnDisplay("Entering Setup mode");
+  //delay( 5 * 1000 );
+  displayTextOnDisplay("Connect to configure: \nSSID: \n" + ssid + "\n\nPass: \n" + String(ap_default_psk ) + "" );
+
+  // Go into software AP mode.
+  WiFi.mode(WIFI_AP);
+  delay(10);
+  WiFi.softAP(_hostname.c_str(), ap_default_psk);
+  Serial.print("IP address: ");
+  Serial.println(WiFi.softAPIP());
+
+  MDNSConnect();
+  setupOTAUpdate();
+
+  server.on("/", handleRoot);
+  server.begin();
+}
+
+void handleRoot() {
+  server.send(200, "text/html", "<h1>You are connected</h1>");
+}
+
+
 void setup() {
   Serial.begin( 115200 );
-  Serial.println( "Starting" );
-  //setupFilesystem();
-
-  configureHostname();
-  setup_button_pins();
-
+  Serial.println( "Setup the professor..." );
   scanI2C();
 
   if ( hasDevice( 60 ) ) {
@@ -935,6 +1180,18 @@ void setup() {
   } else {
     Serial.println("NO Display Detected");
   }
+
+  //  // this will look for the config file
+  //  if ( !setupFilesystem() ) {
+
+  //activateSetupMode();
+  //    return;
+  //  }
+
+  configureHostname();
+  
+  setup_button_pins();
+
 
   if ( hasDevice( 32 ) ) {
     haveIOChip = true;
@@ -966,12 +1223,11 @@ void setup() {
     Serial.println("Barometric Pressure, Temp, Altitude");
     setupBMP085Sensor();
   }
+  if ( _co2_sensor_enabled ) {
+    setup_K30();
+  }
   if (_soilSensorEnabled) setupSoilSensors();
-
-  setupWiFi();
-
   if ( _bluetoothEnabled ) setupBluetooth();
-
   if (_dhtSensorEnabled ) {
     setupDHT();
   }
@@ -979,20 +1235,27 @@ void setup() {
   if ( _flowCounterEnabled ) {
     setupFlowCounter();
   }
-  setupHTTPServer();
-  MDNSConnect();
-  setupOTAUpdate();
-
   Serial.println("System ready.");
 
+  connectNetwork();
+ 
+}
+
+
+void connectNetwork(){
+
+   // connect to the network.
+  setupWiFi();
+  MDNSConnect();
+  setupOTAUpdate();
+  setupHTTPServer();
   getTime();
 
   apiPOST( "/nodered/node-ready", getJSONStatus() );
-
+ 
   //postValue( "system", "status", "ready" );
   //recordValue( "system", "status", "ready", _hostname );
 }
-
 
 void MDNSConnect() {
   if (!MDNS.begin( _hostname.c_str() )) {
@@ -1019,10 +1282,9 @@ void updateSwitchStatus( String switch_number, bool state ) {
 
 //#define OLED_CS     15  // Pin 19, CS - Chip select
 //#define OLED_DC     2   // Pin 20 - DC digital signal
-#define OLED_RESET  12  // Pin 15 -RESET digital signal
+#define OLED_RESET  10  // Pin 15 -RESET digital signal
 
 ESP_SSD1306 display(OLED_RESET);
-
 
 
 #include "leaflift_images.h"
@@ -1042,18 +1304,55 @@ void renderDisplay() {
     // use a predefined util screen
     display.clearDisplay();
     display.setTextColor(WHITE);
-    display.setTextSize(2);
 
+
+    display.setTextSize(1);
+    display.setCursor(2, 0);
+    display.println( "Water: ");
+
+    display.setTextSize(2);
     display.setCursor(2, 10);
     display.println( "pH " + String(ph_value_double) + "" );
 
     display.setCursor(2, 30);
     display.println( "" + String( currentFarenheight ) + "'F" );
 
+    display.setTextSize(1);
+    display.setCursor(2, 55);
+    display.println( "Air: " + String( dht_temp_f ) + "'F" + " " + String( dht_humidity ) + "%" );
+
+
     display.display();
 
     return;
   }
+
+  if ( _hostname == "professor1" ) {
+    // use a predefined util screen
+    display.clearDisplay();
+    display.setTextColor(WHITE);
+
+
+
+    display.setTextSize(2);
+    display.setCursor(0, 0);
+    display.println( "" + String( int(dht_temp_f)) + "'F " + String( int(dht_humidity) ) + " % " );
+
+    display.setCursor(0, 20);
+    display.println( "" + String( "LUX " ) + String(_lastLUXReading)  );
+
+    display.setTextSize(1);
+    display.setCursor(0, 45);
+    display.println( "CO2"  );
+    display.setTextSize(2);
+    display.setCursor(20, 40);
+    display.println( "" + String( _currentCO2 ) + "ppm"  );
+
+    display.display();
+
+    return;
+  }
+
 
   display.clearDisplay();
   display.setTextColor(WHITE);
@@ -1084,14 +1383,14 @@ void renderDisplay() {
   String hours = (h < 10 ? "0" : "") + String( h );
   String minutes = (m < 10 ? "0" : "") + String( m );
   String seconds = (s < 10 ? "0" : "") + String( s );
-  uptime_string = hours + ":" + minutes + ":" + seconds;
+  uptime_string = hours + ": " + minutes + ": " + seconds;
 
   //if ( _uptime_display ) display.println( "  UP: " + uptime_string );
 
   //display.println( " I2C: " + String(  get_i2cString() ) );
 
   if (haveIOChip) {
-    //display.println( " I/O: MCP23017" );
+    //display.println( " I / O: MCP23017" );
     //renderIOInterface();
     renderButtonInterface();
   }
@@ -1106,7 +1405,7 @@ void renderDisplay() {
     display.println( "Soil: " + String( _lastSoilMoistureReading ) + "" );
   }
   if ( _dhtSensorEnabled ) {
-    display.println( "Humidity: " + String( dht_humidity ) + "%" );
+    display.println( "Humidity: " + String( dht_humidity ) + " % " );
     display.println( "    Temp: " + String( dht_temp_f ) + "'F" );
   }
 
@@ -1228,6 +1527,10 @@ void displayTextOnDisplay( String txt )
 }
 void updateDisplay() {
 
+  if ( _hostname == "aqua" ) {
+    return;
+  }
+
   display.clearDisplay();
   display.setTextColor(WHITE);
   display.setCursor(0, 0);
@@ -1235,6 +1538,25 @@ void updateDisplay() {
   display.println( String( currentDisplayText ) );
   display.display();
 
+}
+
+#define DIMMER_I2C_ADDR 0x27
+#define SELECT_DIMMER_CH1 0x80
+#define SELECT_DIMMER_CH2 0x81
+#define SELECT_DIMMER_CH3 0x82
+#define SELECT_DIMMER_CH4 0x83
+
+
+void setDimmerChannel( int channel, int value ) {
+
+  if ( hasDevice( DIMMER_I2C_ADDR ) ) {
+    Wire.beginTransmission(DIMMER_I2C_ADDR); // device address
+    Wire.write( SELECT_DIMMER_CH1 );
+    Wire.write( value );
+    Wire.endTransmission();
+  } else {
+    Serial.println( "Missing A/C Dimmer device: " + String(DIMMER_I2C_ADDR) );
+  }
 }
 
 void initDisplay()
@@ -1259,6 +1581,16 @@ void initDisplay()
   }
 }
 
+
+void checkForUpdate() {
+
+  Serial.println("Checking for Update...");
+
+
+
+
+}
+
 bool buttonADown = false;
 int buttonAState = 0;
 
@@ -1267,7 +1599,7 @@ Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT, 1234
 
 void setupLUXSensor() {
 
-
+  _luxSensorEnabled = true;
   /* Initialise the sensor */
   if (!tsl.begin())
   {
@@ -1288,8 +1620,8 @@ void setupLUXSensor() {
 
   /* Update these values depending on what you've set above! */
   Serial.println("------------------------------------");
-  Serial.print  ("Gain:         "); Serial.println("Auto");
-  Serial.print  ("Timing:       "); Serial.println("13 ms");
+  Serial.print  ("Gain :         "); Serial.println("Auto");
+  Serial.print  ("Timing :       "); Serial.println("13 ms");
   Serial.println("------------------------------------");
 }
 
@@ -1313,50 +1645,105 @@ void readLUXSensor() {
   else
   {
     /* If event.light = 0 lux the sensor is probably saturated
-       and no reliable data could be generated! */
+      and no reliable data could be generated! */
     Serial.println("Sensor overload");
   }
 
 }
+
+// ================================================================
+//#include "kSeries.h" //include kSeries Library
+//kSeries K_30(12,13); //Initialize a kSeries Sensor with pin 12 as Rx and 13 as Tx
+//
+//void read_K30() {
+//
+//  double co2 = K_30.getCO2('p'); //returns co2 value in ppm ('p') or percent ('%')
+//
+//   _currentCO2 = (int)co2;
+//}
+
+// ================================================================
+SoftwareSerial K_30_Serial(12, 13); //Sets up a virtual serial port
+//Using pin 12 for Rx and pin 13 for Tx
+byte readCO2[] = {0xFE, 0X44, 0X00, 0X08, 0X02, 0X9F, 0X25}; //Command packet to read Co2 (see app note)
+byte response[] = {0, 0, 0, 0, 0, 0, 0}; //create an array to store the response
+//multiplier for value. default is 1. set to 3 for K-30 3% and 10 for K-33 ICB
+int valMultiplier = 1;
+int K30_delayTime = 50;
+
+void setup_K30() {
+
+  K_30_Serial.begin(9600); //Opens the virtual serial port with a baud of 9600
+  Serial.println(" \n\n\nSetup K-30 Sensor");
+}
+void read_K30() {
+
+  Serial.println(" Read K - 30 Sensor");
+  poll_K30(readCO2);  
+  _currentCO2 = getCO2Value(response);
+  
+  Serial.print("Co2 ppm = ");
+  Serial.println(_currentCO2);
+
+}
+void poll_K30(byte packet[])
+{
+  Serial.println(" poll Sensor");
+  while (!K_30_Serial.available()) //keep sending request until we start to get a response
+  {
+    K_30_Serial.write(readCO2, 7);
+    delay(K30_delayTime);
+
+  }
+  int timeout = 0; //set a timeout counter
+  while (K_30_Serial.available() < 7 ) //Wait to get a 7 byte response
+  {
+    timeout++;
+    if (timeout > 10) //if it takes too long there was probably an error
+    {
+      while (K_30_Serial.available()) //flush whatever we have
+        K_30_Serial.read();
+      break; //exit and try again
+    }
+    delay(K30_delayTime);
+  }
+  for (int i = 0; i < 7; i++)
+  {
+    response[i] = K_30_Serial.read();
+  }
+}
+int getCO2Value(byte packet[])
+{
+//  int high = packet[3]; //high byte for value is 4th byte in packet in the packet
+//  int low = packet[4]; //low byte for value is 5th byte in the packet
+//
+//  Serial.println( "high: " + String(high) );
+//  Serial.println( "low: " + String(low) );
+
+  int co2value = static_cast<int>(packet[3]) * 256 + static_cast<int>(packet[4]);
+  return co2value * valMultiplier;
+//  unsigned long val = high * 256 + low; //Combine high byte and low byte with this formula to get value
+//  return val * valMultiplier;
+}
+// ================================================================
+
+
+
+
 void loop() {
 
-  //printDebug("Loop");
   //handleBluetooth();
   read_button_pins();
   //pinValues = read_shift_regs();
 
-
-
-  //if ( _buttonBoardConnected ) handleButtons();
-  //
-  //  if ( buttonAState == 0 ) {
-  //    if ( buttonADown ) {
-  //      //
-  //      Serial.println("Button A held down");
-  //    } else {
-  //      buttonADown = true;
-  //      BT.println("{\"id\":\"buttonA\",\"state\":\"DOWN\"}");
-  //
-  //    }
-  //  } else if ( buttonADown ) {
-  //
-  //    Serial.println("Button 4 UP");
-  //    Serial.println("Toggling state of switch A ");
-  //    BT.println("{\"id\":\"buttonA\",\"state\":\"UP\"}");
-  //
-  //    //buttonAState = true;
-  //    buttonADown = false;
-  //    renderDisplay();
-  //  }
-  //mcp.digitalWrite( 6, buttonADown );
-  //readShiftRegister();
-  //updateShiftRegister( outValues );
   ts.execute();
   sensorScheduler.execute();
   ticker.execute();
-
   server.handleClient();
 
+  updateScheduler.execute();
+
+  
   ArduinoOTA.handle();
 }
 

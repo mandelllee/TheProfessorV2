@@ -26,26 +26,30 @@ void readDHTSensor() {
   // Read temperature as Fahrenheit (isFahrenheit = true)
   float f = dht.readTemperature(true);
 
-  // Check if any reads failed and exit early (to try again).
-  if (isnan(h) || isnan(f)) {
-    Serial.println("Failed to read from DHT sensor!");
+  if (isnan(h) ) {
+    Serial.println("Failed to read --humidity from DHT sensor!");
     recentSensorErrors = true;
-//    displayTextOnDisplay( "Failed to read from DHT sensor!");
-    delay(1000);
-    return;
+    
+  } else if ( isnan(f)) {
+    Serial.println("Failed to read --temp from DHT sensor!");
+    recentSensorErrors = true;
+    
   } else {
 
    recentSensorErrors = false;
     if ( h != dht_humidity ) {
       dht_humidity = h;
-      recordValue( "environemnt", "dht_humidity", String( dht_humidity ), _hostname );
+      //recordValue( "environemnt", "dht_humidity", String( dht_humidity ), _hostname );
     }
 
     if ( f != dht_temp_f ) {
       _lastTempF = dht_temp_f = f;
       // _lastTempF gets overwritten if we have a bmp sensor, which is faster
-      recordValue( "environemnt", "dht_temp_f", String( dht_temp_f ), _hostname );
+      //recordValue( "environemnt", "dht_temp_f", String( dht_temp_f ), _hostname );
     }
+
+    Serial.println( "DHT humidity: " + String( h ) + " temp: " + String(f) + "'F " );
+
   }
 
   // Compute heat index in Fahrenheit (the default)

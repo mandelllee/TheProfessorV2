@@ -132,8 +132,14 @@ void read_button_pins() {
         //if ( led_pin != -1 ) digitalWrite(led_pin, LOW);
         if ( button_pin_state[button_num] == 1 ) {
           button_pin_state[button_num] = -1;
-          apiPOST( "/nodered/button-up", "{ \"button_id\":\"" + String(_hostname) + "-" + String(button_num) + "\", \"state\":\"up\" }" );
-          Serial.println( "BUTTON " + String(button_num) + " UP" );
+          
+          if( button_num == 16 ){
+              activateSetupMode(); 
+          } else {
+          
+            apiPOST( "/nodered/button-up", "{ \"button_id\":\"" + String(_hostname) + "-" + String(button_num) + "\", \"state\":\"up\" }" );
+            Serial.println( "BUTTON " + String(button_num) + " UP" );
+          }
         }
       } else {
 
