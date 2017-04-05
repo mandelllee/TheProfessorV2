@@ -5,6 +5,7 @@ void configureHostname() {
 
   chip_id = String( ESP.getChipId() );
   //char c[] = chip_id.c_str();
+  Serial.println("Chip ID: " + chip_id);
 
   char c[chip_id.length() + 1];
   memset(c, 0, chip_id.length() + 1);
@@ -209,6 +210,13 @@ void configureHostname() {
     _phSensorEnabled = true;
     _enableTempProbes = true;
     _dhtSensorEnabled = true;
+
+ } else if ( chip_id == "14017662" ) {
+    _hostname = "EastVillage";
+    _dhtSensorEnabled = true;
+     _luxSensorEnabled = true;
+       wifi_ssid = "flamingo";
+        wifi_psk = "leemandell";
 
   } else if ( chip_id == "13382423" ) {
 
