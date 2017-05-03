@@ -181,7 +181,6 @@ void setupWiFi()
   WiFi.begin(wifi_ssid, wifi_psk);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    addTextToDisplay( "." );
   }
   saveIP();
 }
@@ -856,14 +855,14 @@ int displayStepCount = 0;
 int displayPhase = 0;
 
 
-void checkForUpdates(){
-  
+void checkForUpdates() {
+
   Serial.println("------------------------------ SYSTEM CYCLE CALLBACK ------------------------------");
   // Check for update
-  String response = urlRequest( "10.5.1.160", "/nodered/update.json?current="+VERSION+"&nodeid=" + _hostname, 80 );
+  String response = urlRequest( "10.5.1.160", "/nodered/update.json?current=" + VERSION + "&nodeid=" + _hostname, 80 );
   Serial.println("RESPONSE: [" + response + "]");
 
-  
+
 }
 
 void CycleCallback() {
@@ -897,7 +896,7 @@ void CycleCallback() {
 
 void ReportSensorData() {
 
-  //apiPOST( "/v1/record/sensordata", getJSONData("") );
+  apiPOST( "/v1/record/sensordata", getJSONData("") );
 
 }
 
@@ -1189,7 +1188,7 @@ void setup() {
   //  }
 
   configureHostname();
-  
+
   setup_button_pins();
 
 
@@ -1238,13 +1237,13 @@ void setup() {
   Serial.println("System ready.");
 
   connectNetwork();
- 
+
 }
 
 
-void connectNetwork(){
+void connectNetwork() {
 
-   // connect to the network.
+  // connect to the network.
   setupWiFi();
   MDNSConnect();
   setupOTAUpdate();
@@ -1252,7 +1251,7 @@ void connectNetwork(){
   getTime();
 
   apiPOST( "/nodered/node-ready", getJSONStatus() );
- 
+
   //postValue( "system", "status", "ready" );
   //recordValue( "system", "status", "ready", _hostname );
 }
@@ -1434,6 +1433,9 @@ void renderDisplay() {
   }
   if ( hasDevice( 119 ) ) {
     display.println( "Temp: " + String( _lastTempF ) + "'F" );
+  }
+  if ( _co2_sensor_enabled ) {
+    display.println( "CO2: " + String( _currentCO2 ) + " ppm" );
   }
 
 
@@ -1679,9 +1681,9 @@ void setup_K30() {
 void read_K30() {
 
   Serial.println(" Read K - 30 Sensor");
-  poll_K30(readCO2);  
+  poll_K30(readCO2);
   _currentCO2 = getCO2Value(response);
-  
+
   Serial.print("Co2 ppm = ");
   Serial.println(_currentCO2);
 
@@ -1714,16 +1716,16 @@ void poll_K30(byte packet[])
 }
 int getCO2Value(byte packet[])
 {
-//  int high = packet[3]; //high byte for value is 4th byte in packet in the packet
-//  int low = packet[4]; //low byte for value is 5th byte in the packet
-//
-//  Serial.println( "high: " + String(high) );
-//  Serial.println( "low: " + String(low) );
+  //  int high = packet[3]; //high byte for value is 4th byte in packet in the packet
+  //  int low = packet[4]; //low byte for value is 5th byte in the packet
+  //
+  //  Serial.println( "high: " + String(high) );
+  //  Serial.println( "low: " + String(low) );
 
   int co2value = static_cast<int>(packet[3]) * 256 + static_cast<int>(packet[4]);
   return co2value * valMultiplier;
-//  unsigned long val = high * 256 + low; //Combine high byte and low byte with this formula to get value
-//  return val * valMultiplier;
+  //  unsigned long val = high * 256 + low; //Combine high byte and low byte with this formula to get value
+  //  return val * valMultiplier;
 }
 // ================================================================
 
@@ -1743,7 +1745,7 @@ void loop() {
 
   updateScheduler.execute();
 
-  
+
   ArduinoOTA.handle();
 }
 

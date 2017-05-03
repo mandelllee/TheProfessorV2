@@ -4,7 +4,8 @@
 void configureHostname() {
 
   chip_id = String( ESP.getChipId() );
-  //char c[] = chip_id.c_str();
+  Serial.println("Chip ID: " + chip_id);
+//char c[] = chip_id.c_str();
 
   char c[chip_id.length() + 1];
   memset(c, 0, chip_id.length() + 1);
@@ -34,12 +35,12 @@ void configureHostname() {
     _soilSensorEnabled = true;
 
 
- } else if ( chip_id == "8870018" ) {
+  } else if ( chip_id == "8870018" ) {
 
     _hostname = "potato";
     _dhtSensorEnabled = true;
     _useIOForSwitchChannels = false;
-    
+
     // this will function as the setup button
     button_pins[16] = 14;
 
@@ -64,7 +65,7 @@ void configureHostname() {
     _useIOForSwitchChannels = false;
     channel_pins[3] = 12;
     channel_pins[2] = 13;
-    
+
     //channel_pins[1]= 0; //LED
     //button_pins[1] = 4; //BUTTON
 
@@ -75,15 +76,15 @@ void configureHostname() {
     //channel_pins[3]= 2; //LED
     //channel_pins[4]= 3; //LED
 
- } else if ( chip_id == "14019596" ) {
+  } else if ( chip_id == "14019596" ) {
 
     _hostname = "farm1";
     _dhtSensorEnabled = true;
 
     channel_pins[3] = 12;
     channel_pins[2] = 13;
- 
- } else if ( chip_id == "14018673" ) {
+
+  } else if ( chip_id == "14018673" ) {
     _hostname = "professor2";
     _dhtSensorEnabled = true;
 
@@ -217,6 +218,71 @@ void configureHostname() {
   } else if ( chip_id == "12601523" ) {
     _hostname = "pirupower";
 
+  } else if ( chip_id == "291630" ) {
+    _hostname = "piruNorthUrbanGR1";
+    _dhtSensorEnabled = true;
+    _luxSensorEnabled = true;
+//    _co2_sensor_enabled = true;
+    wifi_ssid = "Redwood Strength";
+    wifi_psk = "squatty07";
+    API_HOST = "api-quadroponic.rhcloud.com";
+    API_PORT = 80;
+    SEND_DATA_TO_API = true;
+
+  } else if ( chip_id == "295944" ) {
+    _hostname = "piruNorthUrbanGR1";
+    _dhtSensorEnabled = true;
+    _luxSensorEnabled = true;
+//    _co2_sensor_enabled = false;
+    wifi_ssid = "Redwood Strength";
+    wifi_psk = "squatty07";
+    API_HOST = "api-quadroponic.rhcloud.com";
+    API_PORT = 80;
+
+  } else if ( chip_id == "1267090" ) {
+    _hostname = "piruNorthGR3a";
+    _dhtSensorEnabled = true;
+    _luxSensorEnabled = true;
+    wifi_ssid = "NETGEAR56";
+    wifi_psk = "boldhippo848";
+    API_HOST = "api-quadroponic.rhcloud.com";
+    API_PORT = 80;
+
+  } else if ( chip_id == "1338305" ) {
+    _hostname = "piruNorthGR3b";
+    _dhtSensorEnabled = true;
+    _luxSensorEnabled = true;
+    wifi_ssid = "NETGEAR56";
+    wifi_psk = "boldhippo848";
+    API_HOST = "api-quadroponic.rhcloud.com";
+    API_PORT = 80;
+
+  } else if ( chip_id == "295839" ) {
+    _hostname = "piruNorthGR3c";
+    _dhtSensorEnabled = true;
+    _luxSensorEnabled = true;
+    wifi_ssid = "NETGEAR56";
+    wifi_psk = "boldhippo848";
+    API_HOST = "api-quadroponic.rhcloud.com";
+    API_PORT = 80;
+
+  } else if ( chip_id == "14017662" ) {
+    _hostname = "FarmOne";
+    _dhtSensorEnabled = true;
+    _luxSensorEnabled = true;
+    wifi_ssid = "AteraNYC";
+    wifi_psk = "AteraNYC77";
+    API_HOST = "api-quadroponic.rhcloud.com";
+    API_PORT = 80;
+
+  } else if ( chip_id == "13383780" ) {
+    _hostname = "EastVillage";
+    _dhtSensorEnabled = true;
+    _luxSensorEnabled = true;
+    wifi_ssid = "Betsy's wifi";
+    wifi_psk = "ninjaturtle";
+    API_HOST = "api-quadroponic.rhcloud.com";
+    API_PORT = 80;
 
   } else if ( chip_id == "1658862" ) {
     _hostname = "insulin";
@@ -360,7 +426,7 @@ void configureHostname() {
 
     _dhtSensorEnabled = true;
 
- 
+
   } else if ( chip_id == "8870018_old" ) {
     _hostname = "potato_old";
 
@@ -557,6 +623,7 @@ void configureHostname() {
 
   } else {
     _hostname = "ESP_" + chip_id;
+    Serial.println("Hostname: " + _hostname);
   }
 
   writeConfigToFilesystem();
