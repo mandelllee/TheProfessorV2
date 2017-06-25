@@ -668,7 +668,7 @@ void readTemperatureSensors() {
 
   Serial.println("Reading temperature probes...");
   if ( !ds.search(addr)) {
-    //Serial.println("No more addresses.");
+    Serial.println("No more addresses.");
     Serial.println();
     ds.reset_search();
     delay(250);
@@ -845,7 +845,7 @@ int n = 0;
 // Callback methods prototypes
 void CycleCallback();
 Task tCycle( 1000, TASK_FOREVER, &CycleCallback, &ts, true);
-Task tSensor( (5 * 1000), TASK_FOREVER, &SensorCallback, &sensorScheduler, true);
+Task tSensor( (60 * 1000), TASK_FOREVER, &SensorCallback, &sensorScheduler, true);
 Task updateCycle( 5 * 60 * 1000, TASK_FOREVER, &checkForUpdates, &updateScheduler, true );
 
 

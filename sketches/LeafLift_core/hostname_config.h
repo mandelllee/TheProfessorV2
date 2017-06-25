@@ -206,14 +206,27 @@ void configureHostname() {
 
   } else if ( chip_id == "1770948" ) {
     _hostname = "piru";
-    _soilSensorEnabled = true;
-    _phSensorEnabled = true;
-    _enableTempProbes = true;
     _dhtSensorEnabled = true;
+       _luxSensorEnabled = true;
+     _co2_sensor_enabled = true;
+    wifi_ssid = "Betsy's wifi";
+    wifi_psk = "ninjaturtle";
+  API_HOST = "api-quadroponic.rhcloud.com";
+    API_PORT = 80;
+    SEND_DATA_TO_API = true;
 
   } else if ( chip_id == "13382423" ) {
 
     _hostname = "fillmore";
+    _dhtSensorEnabled = true;
+       _luxSensorEnabled = true;
+   _enableTempProbes = true;
+    wifi_ssid = "flamingo";
+    wifi_psk = "leemandell";
+  API_HOST = "api-quadroponic.rhcloud.com";
+    API_PORT = 80;
+    SEND_DATA_TO_API = true;
+
 
   } else if ( chip_id == "12601523" ) {
     _hostname = "pirupower";
