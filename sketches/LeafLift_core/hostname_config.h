@@ -205,24 +205,30 @@ void configureHostname() {
 
 
   } else if ( chip_id == "1770948" ) {
-    _hostname = "piru";
+    _hostname = "EcoAquaponics1";
     _dhtSensorEnabled = true;
        _luxSensorEnabled = true;
-     _co2_sensor_enabled = true;
-    wifi_ssid = "Betsy's wifi";
-    wifi_psk = "ninjaturtle";
+//     _co2_sensor_enabled = true;
+    wifi_ssid = "FreedomPop-NZPV";
+    wifi_psk = "freedompop";
   API_HOST = "api-quadroponic.rhcloud.com";
     API_PORT = 80;
     SEND_DATA_TO_API = true;
 
-  } else if ( chip_id == "13382423" ) {
+  } else if ( chip_id == "16615852" ) {
 
-    _hostname = "fillmore";
-    _dhtSensorEnabled = true;
-       _luxSensorEnabled = true;
-   _enableTempProbes = true;
-    wifi_ssid = "flamingo";
-    wifi_psk = "leemandell";
+    _hostname = "piruPower";
+//    _dhtSensorEnabled = true;
+//       _luxSensorEnabled = true;
+//   _enableTempProbes = true;
+ // _useIOForSwitchChannels = true;
+//    channel_pins[1] = 4;
+//    channel_pins[2] = 5;
+//    channel_pins[3] = 6;
+//    channel_pins[4] = 7;
+
+    wifi_ssid = "Betsy's wifi";
+    wifi_psk = "ninjaturtle";
   API_HOST = "api-quadroponic.rhcloud.com";
     API_PORT = 80;
     SEND_DATA_TO_API = true;

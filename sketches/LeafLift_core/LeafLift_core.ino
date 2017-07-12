@@ -51,7 +51,7 @@ String VERSION = "0.1-redish";
 
 String BOARD_ID = "";
 bool _buttonBoardConnected = false;
-bool TEST_MODE = false;
+bool TEST_MODE = true;
 String chip_id = "";
 String _hostname = "";
 
@@ -338,14 +338,14 @@ void setupIO() {
 
   //mcp.pinMode(6, OUTPUT);
 
-  //  mcp.pinMode(0, OUTPUT);
-  //  mcp.pinMode(1, OUTPUT);
-  //  mcp.pinMode(2, OUTPUT);
-  //  mcp.pinMode(3, OUTPUT);
-  //  mcp.digitalWrite(0, HIGH);
-  //  mcp.digitalWrite(1, HIGH);
-  //  mcp.digitalWrite(2, HIGH);
-  //  mcp.digitalWrite(3, HIGH);
+    mcp.pinMode(0, OUTPUT);
+    mcp.pinMode(1, OUTPUT);
+    mcp.pinMode(2, OUTPUT);
+    mcp.pinMode(3, OUTPUT);
+    mcp.digitalWrite(0, HIGH);
+    mcp.digitalWrite(1, HIGH);
+    mcp.digitalWrite(2, HIGH);
+    mcp.digitalWrite(3, HIGH);
   //
   //  mcp.pinMode(4, OUTPUT);
   //  mcp.pinMode(5, OUTPUT);
@@ -371,7 +371,7 @@ void setupIO() {
   //  mcp.pullUp(10, HIGH);
   //  mcp.pullUp(11, HIGH);
 
-  //if ( TEST_MODE ) testSwitches();
+  if ( TEST_MODE ) testSwitches();
 
   //  delay(200);
   //  mcp.digitalWrite(1, LOW);
@@ -393,7 +393,7 @@ void setupIO() {
 }
 
 void testSwitches() {
-
+  Serial.println("Testing switches");
   currentDisplayText = "Testing Switches...\n";
   updateDisplay();
 
@@ -846,7 +846,8 @@ int n = 0;
 void CycleCallback();
 Task tCycle( 1000, TASK_FOREVER, &CycleCallback, &ts, true);
 Task tSensor( (60 * 1000), TASK_FOREVER, &SensorCallback, &sensorScheduler, true);
-Task updateCycle( 5 * 60 * 1000, TASK_FOREVER, &checkForUpdates, &updateScheduler, true );
+//Task updateCycle( 5 * 60 * 1000, TASK_FOREVER, &checkForUpdates, &updateScheduler, true );
+Task updateCycle(15 * 1000, TASK_FOREVER, &checkForUpdates, &updateScheduler, true );
 
 
 int report_interval = 10 * 60 * 1000;
